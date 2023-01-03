@@ -1,0 +1,21 @@
+.container {
+  display: flex;
+  justify-content: center;
+}
+
+.space {
+  width: 70px;
+  height: 70px;
+  background-color: #e7ecef;
+}
+
+.dark {
+  background-color: #274c77;
+  color: #e7ecef;
+}
+
+.space-name {
+  margin: 0px 5px;
+  padding-top: 2px;
+  font-size: 12px;
+}

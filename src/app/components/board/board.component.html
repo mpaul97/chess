@@ -1,0 +1,15 @@
+<div class="container">
+  <div class="col" *ngFor="let file of files; let y = index">
+    <div class="row" *ngFor="let rank of ranks; let x = index">
+      <div class="space" [ngClass]="{ 'dark' : (x + y) % 2 !== 0 }">
+        <p class="space-name">{{ file }}{{ rank }}</p>
+        <div class="piece-container">
+          <div *ngIf="rank == 7">
+            <app-piece [type]="'b-pawn'"></app-piece>
+          </div>
+        </div>
+      </div>
+    </div>
+    <br>
+  </div>
+</div>
