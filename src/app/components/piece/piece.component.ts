@@ -1,4 +1,5 @@
 import { Component, Input, OnInit } from '@angular/core';
+import { Info } from 'src/models/info';
 
 @Component({
   selector: 'app-piece',
@@ -7,7 +8,7 @@ import { Component, Input, OnInit } from '@angular/core';
 })
 export class PieceComponent implements OnInit {
 
-  @Input() type: string = "";
+  @Input() info: Info = new Info();
 
   constructor() { }
 

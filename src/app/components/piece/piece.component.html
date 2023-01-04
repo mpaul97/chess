@@ -1,13 +1,13 @@
-<div class="container">
-  <img *ngIf="type === 'b-pawn'" src="assets/b-pawn.svg" />
-  <img *ngIf="type === 'b-knight'" src="assets/b-knight.svg" />
-  <img *ngIf="type === 'b-bishop'" src="assets/b-bishop.svg" />
-  <img *ngIf="type === 'b-queen'" src="assets/b-queen.svg" />
-  <img *ngIf="type === 'b-king'" src="assets/b-king.svg" />
+<img class="piece" *ngIf="info.color === 'black' && info.type === 'pawn'" src="assets/b-pawn.svg" />
+<img class="piece" *ngIf="info.color === 'black' && info.type === 'knight'" src="assets/b-knight.svg" />
+<img class="piece" *ngIf="info.color === 'black' && info.type === 'bishop'" src="assets/b-bishop.svg" />
+<img class="piece" *ngIf="info.color === 'black' && info.type === 'queen'" src="assets/b-queen.svg" />
+<img class="piece" *ngIf="info.color === 'black' && info.type === 'king'" src="assets/b-king.svg" />
+<img class="piece" *ngIf="info.color === 'black' && info.type === 'rook'" src="assets/b-rook.svg" />
 
-  <img *ngIf="type === 'w-pawn'" src="assets/w-pawn.svg" />
-  <img *ngIf="type === 'w-knight'" src="assets/w-knight.svg" />
-  <img *ngIf="type === 'w-bishop'" src="assets/w-bishop.svg" />
-  <img *ngIf="type === 'w-queen'" src="assets/w-queen.svg" />
-  <img *ngIf="type === 'w-king'" src="assets/w-king.svg" />
-</div>
+<img class="piece" *ngIf="info.color === 'white' && info.type === 'pawn'" src="assets/w-pawn.svg" />
+<img class="piece" *ngIf="info.color === 'white' && info.type === 'knight'" src="assets/w-knight.svg" />
+<img class="piece" *ngIf="info.color === 'white' && info.type === 'bishop'" src="assets/w-bishop.svg" />
+<img class="piece" *ngIf="info.color === 'white' && info.type === 'queen'" src="assets/w-queen.svg" />
+<img class="piece" *ngIf="info.color === 'white' && info.type === 'king'" src="assets/w-king.svg" />
+<img class="piece" *ngIf="info.color === 'white' && info.type === 'rook'" src="assets/w-rook.svg" />

@@ -6,16 +6,32 @@
 .space {
   width: 70px;
   height: 70px;
-  background-color: #e7ecef;
+  background-color: var(--light);
 }
 
 .dark {
-  background-color: #274c77;
-  color: #e7ecef;
+  background-color: var(--dark);
+  color: var(--light);
 }
 
 .space-name {
   margin: 0px 5px;
   padding-top: 2px;
   font-size: 12px;
+}
+
+.piece-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.playable {
+  width: 40%;
+  height: 40%;
+  margin: auto;
+  margin-top: 10%;
+  background-color: black;
+  opacity: 0.4;
+  border-radius: 100%;
 }
