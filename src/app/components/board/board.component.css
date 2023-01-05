@@ -1,6 +1,9 @@
 .container {
+  height: 560px;
+
   display: flex;
-  justify-content: center;
+  flex-wrap: wrap;
+  flex-direction: column;
 }
 
 .space {
@@ -34,4 +37,9 @@
   background-color: black;
   opacity: 0.4;
   border-radius: 100%;
+}
+
+.hasPiecePlayable {
+  margin-top: -50px;
+  background-color: yellow;
 }

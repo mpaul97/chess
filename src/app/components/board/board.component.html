@@ -1,13 +1,9 @@
 <div class="container">
-  <div class="col" *ngFor="let file of files; let y = index">
-    <div class="row" *ngFor="let rank of ranks; let x = index">
-      <div class="space" [ngClass]="{ 'dark' : (x + y) % 2 !== 0 }" (click)="spaceClicked(file, rank)">
-        <p class="space-name">{{ file }}{{ rank }}</p>
-        <div class="piece-container" *ngFor="let pieceInfo of pieces">
-          <app-piece *ngIf="pieceInfo.file === file && pieceInfo.rank === rank" [info]="pieceInfo"></app-piece>
-        </div>
-        <div class="playable" *ngIf="isPlayable(file, rank)"></div>
-      </div>
+  <div class="space" *ngFor="let space of allSpaces" [ngClass]="{ 'dark' : (space.x + space.y) % 2 !== 0 }" (click)="spaceClicked(space.file, space.rank)">
+    <p class="space-name">{{ space.file }}{{ space.rank }}</p>
+    <div class="piece-container" *ngFor="let pieceInfo of pieces">
+      <app-piece *ngIf="pieceInfo.file === space.file && pieceInfo.rank === space.rank" [info]="pieceInfo"></app-piece>
     </div>
+    <div class="playable" *ngIf="isPlayable(space.file, space.rank)" [ngClass]="{ 'hasPiecePlayable' : space.hasPiece }"></div>
   </div>
 </div>
