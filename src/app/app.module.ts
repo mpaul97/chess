@@ -6,6 +6,10 @@ import { AppComponent } from './app.component';
 import { BoardComponent } from './components/board/board.component';
 import { PieceComponent } from './components/piece/piece.component';
 
+import { SocketIoModule, SocketIoConfig } from 'ngx-socket-io';
+
+const config: SocketIoConfig = { url: 'http://localhost:3000', options: { withCredentials: false,} };
+
 @NgModule({
   declarations: [
     AppComponent,
@@ -14,7 +18,8 @@ import { PieceComponent } from './components/piece/piece.component';
   ],
   imports: [
     BrowserModule,
-    AppRoutingModule
+    AppRoutingModule,
+    SocketIoModule.forRoot(config)
   ],
   providers: [],
   bootstrap: [AppComponent]
