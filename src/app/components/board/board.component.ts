@@ -30,11 +30,12 @@ export class BoardComponent implements OnInit {
     this.initAllSpaces();
   }
 
+  // main logic
   spaceClicked(file: string, rank: number) {
     let piece = this.getPiece(file, rank);
     if (piece) {
-      this.findMoves(piece);
       this.selectedPiece = piece;
+      this.findMoves(piece);
     } 
     let isSpacePlayable = this.playableSpaces.filter(x => x.file === file && x.rank === rank)[0];
     if (isSpacePlayable) {
@@ -84,9 +85,12 @@ export class BoardComponent implements OnInit {
       this.playableSpaces = this.getKnightMoves(piece.file, piece.rank);
     } else if (piece.isBishop()) {
       this.playableSpaces = this.getBishopMoves(piece.file, piece.rank);
+    } else if (piece.isRook()) {
+      this.playableSpaces = this.getRookMoves(piece.file, piece.rank);
     }
   }
 
+  // piece moves
   getKnightMoves(file: string, rank: number) : Space[] {
     return [
       new Space(this.files[this.getFileIndex(file) + 1], rank + 2),
@@ -102,21 +106,110 @@ export class BoardComponent implements OnInit {
 
   getBishopMoves(file: string, rank: number) : Space[] {
     let spaces: Space[] = [];
+    // up right diagonal
     for (var i = 1; i < 8; i++) {
       let targetFile = this.files[this.getFileIndex(file) + i];
-      let targetRank = rank + i;
-      let allSpacesIndex = this.allSpaces.indexOf(x => x.file === targetFile && x.rank === targetRank);
-      if (this.allSpaces[allSpacesIndex].hasPiece) {
-
+      if (targetFile === undefined) {
+        break;
       }
-      spaces.push(new Space(targetFile, targetRank);
-    }
-    // return [
-    //   new Space(this.files[this.getFileIndex(file) + 1], rank + 1)
-    // ]
+      let targetRank = rank + i;
+      if (!this.ranks.includes(targetRank)) {
+        break;
+      }
+      let allSpacesIndex = this.allSpaces.findIndex(x => x.rank === targetRank && x.file === targetFile);
+      if (this.allSpaces[allSpacesIndex].hasPiece) {
+        let targetPiece = this.getPiece(targetFile, targetRank);
+        if (this.selectedPiece.color === targetPiece?.color) {
+          break;
+        }
+      }
+      spaces.push(new Space(targetFile, targetRank));
+    };
+    // up left diagonal
+    for (var i = 1; i < 8; i++) {
+      let targetFile = this.files[this.getFileIndex(file) - i];
+      if (targetFile === undefined) {
+        break;
+      }
+      let targetRank = rank + i;
+      if (!this.ranks.includes(targetRank)) {
+        break;
+      }
+      let allSpacesIndex = this.allSpaces.findIndex(x => x.rank === targetRank && x.file === targetFile);
+      if (this.allSpaces[allSpacesIndex].hasPiece) {
+        let targetPiece = this.getPiece(targetFile, targetRank);
+        if (this.selectedPiece.color === targetPiece?.color) {
+          break;
+        }
+      }
+      spaces.push(new Space(targetFile, targetRank));
+    };
+    // down left diagonal
+    for (var i = 1; i < 8; i++) {
+      let targetFile = this.files[this.getFileIndex(file) - i];
+      if (targetFile === undefined) {
+        break;
+      }
+      let targetRank = rank - i;
+      if (!this.ranks.includes(targetRank)) {
+        break;
+      }
+      let allSpacesIndex = this.allSpaces.findIndex(x => x.rank === targetRank && x.file === targetFile);
+      if (this.allSpaces[allSpacesIndex].hasPiece) {
+        let targetPiece = this.getPiece(targetFile, targetRank);
+        if (this.selectedPiece.color === targetPiece?.color) {
+          break;
+        }
+      }
+      spaces.push(new Space(targetFile, targetRank));
+    };
+    // down right diagonal
+    for (var i = 1; i < 8; i++) {
+      let targetFile = this.files[this.getFileIndex(file) + i];
+      if (targetFile === undefined) {
+        break;
+      }
+      let targetRank = rank - i;
+      if (!this.ranks.includes(targetRank)) {
+        break;
+      }
+      let allSpacesIndex = this.allSpaces.findIndex(x => x.rank === targetRank && x.file === targetFile);
+      if (this.allSpaces[allSpacesIndex].hasPiece) {
+        let targetPiece = this.getPiece(targetFile, targetRank);
+        if (this.selectedPiece.color === targetPiece?.color) {
+          break;
+        }
+      }
+      spaces.push(new Space(targetFile, targetRank));
+    };
     return spaces
   }
 
+  getRookMoves(file: string, rank: number) : Space[] {
+    let spaces: Space[] = [];
+    // up
+    for (var i = 1; i < 8; i++) {
+      let targetFile = this.files[this.getFileIndex(file) + i];
+      if (targetFile === undefined) {
+        break;
+      }
+      let targetRank = rank;
+      if (!this.ranks.includes(targetRank)) {
+        break;
+      }
+      let allSpacesIndex = this.allSpaces.findIndex(x => x.rank === targetRank && x.file === targetFile);
+      if (this.allSpaces[allSpacesIndex].hasPiece) {
+        let targetPiece = this.getPiece(targetFile, targetRank);
+        if (this.selectedPiece.color === targetPiece?.color) {
+          break;
+        }
+      }
+      spaces.push(new Space(targetFile, targetRank));
+    };
+    return spaces;
+  }
+
+  // helpers
   getFileIndex(file: string) {
     return this.files.indexOf(file);
   }
@@ -132,6 +225,19 @@ export class BoardComponent implements OnInit {
     return this.pieces.filter(x => x.file === file && x.rank === rank)[0];
   }
 
+  reset() {
+    this.started = false;
+    this.isWhiteMove = true;
+    this.allSpaces = [];
+    this.playableSpaces = [];
+    this.pieces = [];
+    this.selectedPiece = new Info();
+    this.initBlackPieces();
+    this.initWhitePieces();
+    this.initAllSpaces();
+  }
+
+  // initial functions
   initBlackPieces() {
     // pawns
     for (let file of this.files) {

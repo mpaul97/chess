@@ -43,3 +43,24 @@
   margin-top: -50px;
   background-color: yellow;
 }
+
+.button-container {
+  display: flex;
+  flex-direction: column;
+  margin-top: 10px;
+}
+
+.reset {
+  font-size: 14px;
+  padding: 5px;
+  color: var(--light);
+  background-color: var(--dark);
+  font-weight: bold;
+  border: 2px solid var(--light);
+  border-radius: 5px;
+}
+
+.reset:hover {
+  cursor: pointer;
+  opacity: 0.8;
+}
