@@ -13,10 +13,6 @@ export class AppComponent implements OnInit {
   constructor(private cs: ChessService) { }
 
   ngOnInit(): void {
-    this.cs.connect()
-  }
-
-  newRoom() {
-    this.cs.emitMessage()
+    
   }
 }

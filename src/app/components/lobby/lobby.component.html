@@ -1,0 +1,66 @@
+<div class="lobby">
+    <div class="rooms-container">
+        <p-table class="rooms-table" [value]="rooms">
+            <ng-template pTemplate="caption">
+                <div style="display: flex; flex-direction: row; justify-content: space-between; align-items: center">
+                    <h1 style="color: white">Rooms</h1>
+                    <button type="button" pButton label="New Room"
+                            class="p-button-primary p-button-rounded"
+                            (click)="this.displayDialog = true"
+                    ></button>
+                </div>
+            </ng-template>
+            <ng-template pTemplate="header">
+                <tr>
+                    <th>Creator</th>
+                    <th>Players</th>
+                    <th>Join</th>
+                </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-room>
+                <tr>
+                    <td>{{room.playerOne.username}}</td>
+                    <td> {{room | playerCount}}/2</td>
+                    <td>
+                        <button type="button" pButton label="Join" 
+                                class="p-button-primary p-button-rounded p-button-outlined"
+                                style="float: right;"
+                                (click)="onJoinRoom(room)"
+                        ></button>
+                    </td>
+                </tr>
+            </ng-template>
+        </p-table>
+    </div>
+</div>
+
+<p-dialog header="Create a New Room" [(visible)]="displayDialog"
+          [draggable]="false" [modal]="true" [dismissableMask]="true"
+>
+    <div style="display: inline-flex; margin-top: 20px;">
+        <span class="p-float-label">
+            <input id="input" type="text" pInputText [(ngModel)]="username"> 
+            <label for="input">Username</label>
+        </span>
+        <button type="button" pButton label="Create"
+                class="p-button-primary"
+                style="margin-left: 10px;"
+                (click)="onNewRoom()"
+        ></button>
+    </div>
+</p-dialog>
+<p-dialog header="Join a Room" [(visible)]="displayJoinDialog"
+          [draggable]="false" [modal]="true" [dismissableMask]="true"
+>
+    <div style="display: inline-flex; margin-top: 20px;">
+        <span class="p-float-label">
+            <input id="input" type="text" pInputText [(ngModel)]="username"> 
+            <label for="input">Username</label>
+        </span>
+        <button type="button" pButton label="Join"
+                class="p-button-primary"
+                style="margin-left: 10px;"
+                (click)="joinRoom(this.selectedRoom)"
+        ></button>
+    </div>
+</p-dialog>

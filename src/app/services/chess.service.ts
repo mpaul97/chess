@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { EventEmitter, Injectable } from '@angular/core';
 import { Socket } from 'ngx-socket-io';
 
 @Injectable({
@@ -6,14 +6,35 @@ import { Socket } from 'ngx-socket-io';
 })
 export class ChessService {
 
-  constructor(private socket: Socket) { }
+  newRoomAdded: EventEmitter<any> = new EventEmitter()
+
+  constructor(private socket: Socket) { 
+    socket.on('roomsList', (roomList: Array<any>) => {
+      this.newRoomAdded.emit(roomList)
+    })
+  }
 
   connect() {
     this.socket.connect() 
   }
 
-  emitMessage() {
-    console.log('emitting')
-    this.socket.emit('message', 'HELLOWORLD!')
+  getRooms() {
+    this.socket.emit('getRooms', (res: any) => {
+      console.log(res)
+    })
+  }
+  newRoom(username: string) {
+    this.socket.emit('newRoom', {username: username}, (res: any) => {
+      console.log(res.message)
+
+      this.newRoomAdded.emit(res.roomObject)
+    })
+  }
+  joinRoom(room: string, username: string) {
+    this.socket.emit('joinRoom', {room: room, username: username}, (res: any) => {
+      console.log(res.message)
+
+
+    })
   }
 }
