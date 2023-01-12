@@ -9,6 +9,7 @@ import { Info } from 'src/models/info';
 export class PieceComponent implements OnInit {
 
   @Input() info: Info = new Info();
+  @Input() isTaken: boolean | undefined;
 
   constructor() { }
 

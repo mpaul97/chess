@@ -22,17 +22,21 @@ export class BoardComponent implements OnInit {
   allSpaces: Space[] = [];
   playableSpaces: Space[] = [];
 
+  takenPieces: Info[] = [];
+
   constructor() {}
 
   ngOnInit(): void {
     this.initBlackPieces();
     this.initWhitePieces();
     this.initAllSpaces();
+    this.takenPieces.push(...this.pieces);
   }
 
   // main logic
   spaceClicked(file: string, rank: number) {
     let piece = this.getPiece(file, rank);
+    let clickedSpaceIndex = this.allSpaces.findIndex(x => x.rank === rank && x.file === file);
     if (piece) {
       if (this.isWhiteMove && piece.color === 'white') {
         this.selectedPiece = piece;
@@ -43,9 +47,13 @@ export class BoardComponent implements OnInit {
     }
     let isSpacePlayable = this.playableSpaces.filter(x => x.file === file && x.rank === rank)[0];
     if (isSpacePlayable) {
+      if (this.allSpaces[clickedSpaceIndex].isTakeable) {
+        let takeablePiece = this.getPiece(file, rank);
+        this.pieces = this.pieces.filter(x => x !== takeablePiece);
+        this.takenPieces.push(takeablePiece as Info);
+      };
       let index = this.pieces.findIndex(x => x.rank === this.selectedPiece.rank && x.file === this.selectedPiece.file);
       let pieceSpaceIndex = this.allSpaces.findIndex(x => x.rank === this.selectedPiece.rank && x.file === this.selectedPiece.file);
-      let clickedSpaceIndex = this.allSpaces.findIndex(x => x.rank === rank && x.file === file);
       if (index || index === 0) { // clicked space is playable
         this.pieces[index].rank = rank;
         this.pieces[index].file = file;
@@ -54,6 +62,7 @@ export class BoardComponent implements OnInit {
         this.playableSpaces = [];
         this.allSpaces[pieceSpaceIndex].hasPiece = false; // old space
         this.allSpaces[clickedSpaceIndex].hasPiece = true; // new space
+        this.allSpaces.map(x => x.isTakeable = false);
       };
     }
   }
@@ -91,7 +100,7 @@ export class BoardComponent implements OnInit {
     let spaces: Space[] = [];
     let multiplier: number = piece.color === 'white' ? 1 : -1;
     let firstSpace = this.allSpaces.find(x => x.file === piece.file && x.rank === piece.rank + 1*multiplier);
-      let secondSpace = this.allSpaces.find(x => x.file === piece.file && x.rank === piece.rank + 2*multiplier);
+    let secondSpace = this.allSpaces.find(x => x.file === piece.file && x.rank === piece.rank + 2*multiplier);
     if (!piece.hasMoved) {
       if (!firstSpace?.hasPiece) {
         spaces.push(new Space(piece.file, piece.rank + 1*multiplier));
@@ -120,6 +129,12 @@ export class BoardComponent implements OnInit {
           if (this.selectedPiece.color !== targetPiece?.color) {
             spaces.push(new Space(targetFile, targetRank));
           }
+        } else {
+          let targetPiece = this.getPiece(targetFile, targetRank);
+          if (this.selectedPiece.color !== targetPiece?.color) {
+            this.allSpaces[allSpacesIndex].isTakeable = true;
+            spaces.push(new Space(targetFile, targetRank));
+          }
         }
       }
     }
@@ -128,8 +143,8 @@ export class BoardComponent implements OnInit {
 
   getBishopMoves(file: string, rank: number) : Space[] {
     let spaces: Space[] = [];
-    // up right diagonal
     for (var i = 1; i < 8; i++) {
+      // up right diagonal
       let targetFile = this.files[this.getFileIndex(file) + i];
       if (targetFile === undefined) {
         break;
@@ -387,9 +402,9 @@ export class BoardComponent implements OnInit {
     this.files.forEach((file, y) => {
       this.ranks.forEach((rank, x) => {
         if (this.getPiece(file, rank)) {
-          this.allSpaces.push(new Space(file, rank, true, x, y));
+          this.allSpaces.push(new Space(file, rank, true, false, x, y));
         } else {
-          this.allSpaces.push(new Space(file, rank, false, x, y));
+          this.allSpaces.push(new Space(file, rank, false, false, x, y));
         }
       })
     })

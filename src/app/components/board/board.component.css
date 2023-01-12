@@ -1,4 +1,12 @@
+.content {
+  width: 100%;
+  display: flex;
+  justify-content: flex-start;
+  margin-left: 50%;
+}
+
 .container {
+  width: 560px;
   height: 560px;
 
   display: flex;
@@ -39,15 +47,20 @@
   border-radius: 100%;
 }
 
-.hasPiecePlayable {
+.isTakeable {
   margin-top: -50px;
-  background-color: yellow;
+  background-color: rgb(255, 0, 0);
+  opacity: 0.4;
 }
 
-.button-container {
+.side-container {
+  background-color: gray;
+  /* padding-left: 20px; */
+  /* padding-right: 5px; */
   display: flex;
   flex-direction: column;
-  margin-top: 10px;
+  justify-content: center;
+  align-items: center;
 }
 
 .reset {
@@ -63,4 +76,12 @@
 .reset:hover {
   cursor: pointer;
   opacity: 0.8;
+}
+
+.taken-container {
+  display: inline-flex;
+}
+
+.taken-piece {
+  margin-left: -20px;
 }
