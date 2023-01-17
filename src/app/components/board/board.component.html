@@ -1,4 +1,9 @@
-<div class="content">  
+ <div class="taken-container">
+  <div class="taken-piece"*ngFor="let pieceInfo of takenPieces">
+    <app-piece [info]="pieceInfo" [isTaken]="true"></app-piece>
+  </div>
+</div> 
+<div class="content">
   <div class="container">
     <div class="space" *ngFor="let space of allSpaces" [ngClass]="{ 'dark' : (space.x + space.y) % 2 !== 0 }" (click)="spaceClicked(space.file, space.rank)">
       <p class="space-name">{{ space.file }}{{ space.rank }}</p>
@@ -8,16 +13,6 @@
       <div class="playable" *ngIf="isPlayable(space.file, space.rank)" [ngClass]="{ 'isTakeable' : space.isTakeable}"></div>
     </div>
   </div>
-  <div class="side-container">
-    <div class="taken-container white" *ngFor="let pieceInfo of takenPieces">
-      <app-piece class="taken-piece" [info]="pieceInfo" [isTaken]="true" *ngIf="pieceInfo.color === 'white'"></app-piece>
-    </div>
-    <div class="button-container">
-      <button class="reset" (click)="reset()">Reset</button>
-    </div>
-    <div class="taken-container black" *ngFor="let pieceInfo of takenPieces">
-      <app-piece class="taken-piece" [info]="pieceInfo" [isTaken]="true" *ngIf="pieceInfo.color === 'black'"></app-piece>
-    </div>
-  </div>
+  <button class="reset" (click)="reset()">Reset</button>
 </div>
 
