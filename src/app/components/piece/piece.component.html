@@ -1,13 +1,13 @@
-<img class="piece" *ngIf="info.color === 'black' && info.type === 'pawn'" src="assets/b-pawn.svg" />
-<img class="piece" *ngIf="info.color === 'black' && info.type === 'knight'" src="assets/b-knight.svg" />
-<img class="piece" *ngIf="info.color === 'black' && info.type === 'bishop'" src="assets/b-bishop.svg" />
-<img class="piece" *ngIf="info.color === 'black' && info.type === 'queen'" src="assets/b-queen.svg" />
-<img class="piece" *ngIf="info.color === 'black' && info.type === 'king'" src="assets/b-king.svg" />
-<img class="piece" *ngIf="info.color === 'black' && info.type === 'rook'" src="assets/b-rook.svg" />
+<img class="piece" *ngIf="info.color === 'black' && info.type === 'pawn'"  [ngClass]="{ 'isTaken' : isTaken }" src="assets/b-pawn.svg" />
+<img class="piece" *ngIf="info.color === 'black' && info.type === 'knight'" [ngClass]="{ 'isTaken' : isTaken }" src="assets/b-knight.svg" />
+<img class="piece" *ngIf="info.color === 'black' && info.type === 'bishop'" [ngClass]="{ 'isTaken' : isTaken }" src="assets/b-bishop.svg" />
+<img class="piece" *ngIf="info.color === 'black' && info.type === 'queen'" [ngClass]="{ 'isTaken' : isTaken }" src="assets/b-queen.svg" />
+<img class="piece" *ngIf="info.color === 'black' && info.type === 'king'" [ngClass]="{ 'isTaken' : isTaken }" src="assets/b-king.svg" />
+<img class="piece" *ngIf="info.color === 'black' && info.type === 'rook'" [ngClass]="{ 'isTaken' : isTaken }" src="assets/b-rook.svg" />
 
-<img class="piece" *ngIf="info.color === 'white' && info.type === 'pawn'" src="assets/w-pawn.svg" />
-<img class="piece" *ngIf="info.color === 'white' && info.type === 'knight'" src="assets/w-knight.svg" />
-<img class="piece" *ngIf="info.color === 'white' && info.type === 'bishop'" src="assets/w-bishop.svg" />
-<img class="piece" *ngIf="info.color === 'white' && info.type === 'queen'" src="assets/w-queen.svg" />
-<img class="piece" *ngIf="info.color === 'white' && info.type === 'king'" src="assets/w-king.svg" />
-<img class="piece" *ngIf="info.color === 'white' && info.type === 'rook'" src="assets/w-rook.svg" />
+<img class="piece" *ngIf="info.color === 'white' && info.type === 'pawn'" [ngClass]="{ 'isTaken' : isTaken }" src="assets/w-pawn.svg" />
+<img class="piece" *ngIf="info.color === 'white' && info.type === 'knight'" [ngClass]="{ 'isTaken' : isTaken }" src="assets/w-knight.svg" />
+<img class="piece" *ngIf="info.color === 'white' && info.type === 'bishop'" [ngClass]="{ 'isTaken' : isTaken }" src="assets/w-bishop.svg" />
+<img class="piece" *ngIf="info.color === 'white' && info.type === 'queen'" [ngClass]="{ 'isTaken' : isTaken }" src="assets/w-queen.svg" />
+<img class="piece" *ngIf="info.color === 'white' && info.type === 'king'" [ngClass]="{ 'isTaken' : isTaken }" src="assets/w-king.svg" />
+<img class="piece" *ngIf="info.color === 'white' && info.type === 'rook'" [ngClass]="{ 'isTaken' : isTaken }" src="assets/w-rook.svg" />

@@ -3,3 +3,9 @@
   height: 60px;
   margin-top: -0.75rem;
 }
+
+.isTaken {
+  width: 30px;
+  height: 30px;
+  margin-top: 0;
+}

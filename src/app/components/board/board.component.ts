@@ -22,27 +22,39 @@ export class BoardComponent implements OnInit {
   allSpaces: Space[] = [];
   playableSpaces: Space[] = [];
 
+  takenPieces: Info[] = [];
+
   constructor() {}
 
   ngOnInit(): void {
     this.initBlackPieces();
     this.initWhitePieces();
     this.initAllSpaces();
+    this.takenPieces.push(...this.pieces);
   }
 
   // main logic
   spaceClicked(file: string, rank: number) {
     let piece = this.getPiece(file, rank);
+    let clickedSpaceIndex = this.allSpaces.findIndex(x => x.rank === rank && x.file === file);
     if (piece) {
-      this.selectedPiece = piece;
+      if (this.isWhiteMove && piece.color === 'white') {
+        this.selectedPiece = piece;
+      } else if (!this.isWhiteMove && piece.color === 'black') {
+        this.selectedPiece = piece;
+      }
       this.findMoves(piece);
-    } 
+    }
     let isSpacePlayable = this.playableSpaces.filter(x => x.file === file && x.rank === rank)[0];
     if (isSpacePlayable) {
+      if (this.allSpaces[clickedSpaceIndex].isTakeable) {
+        let takeablePiece = this.getPiece(file, rank);
+        this.pieces = this.pieces.filter(x => x !== takeablePiece);
+        this.takenPieces.push(takeablePiece as Info);
+      };
       let index = this.pieces.findIndex(x => x.rank === this.selectedPiece.rank && x.file === this.selectedPiece.file);
       let pieceSpaceIndex = this.allSpaces.findIndex(x => x.rank === this.selectedPiece.rank && x.file === this.selectedPiece.file);
-      let clickedSpaceIndex = this.allSpaces.findIndex(x => x.rank === rank && x.file === file);
-      if (index) { // clicked space is playable
+      if (index || index === 0) { // clicked space is playable
         this.pieces[index].rank = rank;
         this.pieces[index].file = file;
         this.pieces[index].hasMoved = true;
@@ -50,6 +62,7 @@ export class BoardComponent implements OnInit {
         this.playableSpaces = [];
         this.allSpaces[pieceSpaceIndex].hasPiece = false; // old space
         this.allSpaces[clickedSpaceIndex].hasPiece = true; // new space
+        this.allSpaces.map(x => x.isTakeable = false);
       };
     }
   }
@@ -68,46 +81,70 @@ export class BoardComponent implements OnInit {
 
   getPlayableSpaces(piece: Info) {
     if (piece.isPawn()) {
-      if (piece.isWhite()) {
-        if (!piece.hasMoved) {
-          this.playableSpaces = [new Space(piece.file, piece.rank + 1), new Space(piece.file, piece.rank + 2)];
-        } else {
-          this.playableSpaces = [new Space(piece.file, piece.rank + 1)];
-        }
-      } else {
-        if (!piece.hasMoved) {
-          this.playableSpaces = [new Space(piece.file, piece.rank - 1), new Space(piece.file, piece.rank - 2)];
-        } else {
-          this.playableSpaces = [new Space(piece.file, piece.rank - 1)];
-        }
-      }
+      this.playableSpaces = this.getPawnMoves(piece);
     } else if (piece.isKnight()) {
       this.playableSpaces = this.getKnightMoves(piece.file, piece.rank);
     } else if (piece.isBishop()) {
       this.playableSpaces = this.getBishopMoves(piece.file, piece.rank);
     } else if (piece.isRook()) {
       this.playableSpaces = this.getRookMoves(piece.file, piece.rank);
-    }
+    } else if (piece.isQueen()) {
+      this.playableSpaces = this.getQueenMoves(piece.file, piece.rank);
+    } else {
+      this.playableSpaces = this.getKingMoves(piece.file, piece.rank);
+    };
   }
 
   // piece moves
+  getPawnMoves(piece: Info) : Space[] {
+    let spaces: Space[] = [];
+    let multiplier: number = piece.color === 'white' ? 1 : -1;
+    let firstSpace = this.allSpaces.find(x => x.file === piece.file && x.rank === piece.rank + 1*multiplier);
+    let secondSpace = this.allSpaces.find(x => x.file === piece.file && x.rank === piece.rank + 2*multiplier);
+    if (!piece.hasMoved) {
+      if (!firstSpace?.hasPiece) {
+        spaces.push(new Space(piece.file, piece.rank + 1*multiplier));
+      };
+      if (!firstSpace?.hasPiece && !secondSpace?.hasPiece) {
+        spaces.push(new Space(piece.file, piece.rank + 2*multiplier));
+      };
+    } else {
+      if (!firstSpace?.hasPiece) {
+        spaces.push(new Space(piece.file, piece.rank + 1*multiplier));
+      };
+    };
+    return spaces;
+  }
+
   getKnightMoves(file: string, rank: number) : Space[] {
-    return [
-      new Space(this.files[this.getFileIndex(file) + 1], rank + 2),
-      new Space(this.files[this.getFileIndex(file) - 1], rank + 2),
-      new Space(this.files[this.getFileIndex(file) - 2], rank + 1),
-      new Space(this.files[this.getFileIndex(file) + 2], rank + 1),
-      new Space(this.files[this.getFileIndex(file) + 1], rank - 2),
-      new Space(this.files[this.getFileIndex(file) - 1], rank - 2),
-      new Space(this.files[this.getFileIndex(file) - 2], rank - 1),
-      new Space(this.files[this.getFileIndex(file) + 2], rank - 1)
-    ]
+    let spaces: Space[] = [];
+    let validSpaces = [[1, 2], [-1, 2], [-2, 1], [2, 1], [1, -2], [-1, -2], [-2, -1], [2, -1]];
+    for (let [vertical, horizontal] of validSpaces) {
+      let targetFile = this.files[this.getFileIndex(file) + vertical];
+      let targetRank = rank + horizontal;
+      let allSpacesIndex = this.allSpaces.findIndex(x => x.rank === targetRank && x.file === targetFile);
+      if (targetFile && targetRank && this.allSpaces[allSpacesIndex]) {
+        if (!this.allSpaces[allSpacesIndex].hasPiece) {
+          let targetPiece = this.getPiece(targetFile, targetRank);
+          if (this.selectedPiece.color !== targetPiece?.color) {
+            spaces.push(new Space(targetFile, targetRank));
+          }
+        } else {
+          let targetPiece = this.getPiece(targetFile, targetRank);
+          if (this.selectedPiece.color !== targetPiece?.color) {
+            this.allSpaces[allSpacesIndex].isTakeable = true;
+            spaces.push(new Space(targetFile, targetRank));
+          }
+        }
+      }
+    }
+    return spaces;
   }
 
   getBishopMoves(file: string, rank: number) : Space[] {
     let spaces: Space[] = [];
-    // up right diagonal
     for (var i = 1; i < 8; i++) {
+      // up right diagonal
       let targetFile = this.files[this.getFileIndex(file) + i];
       if (targetFile === undefined) {
         break;
@@ -189,6 +226,44 @@ export class BoardComponent implements OnInit {
     let spaces: Space[] = [];
     // up
     for (var i = 1; i < 8; i++) {
+      let targetFile = this.files[this.getFileIndex(file)];
+      if (targetFile === undefined) {
+        break;
+      }
+      let targetRank = rank + i;
+      if (!this.ranks.includes(targetRank)) {
+        break;
+      }
+      let allSpacesIndex = this.allSpaces.findIndex(x => x.rank === targetRank && x.file === targetFile);
+      if (this.allSpaces[allSpacesIndex].hasPiece) {
+        let targetPiece = this.getPiece(targetFile, targetRank);
+        if (this.selectedPiece.color === targetPiece?.color) {
+          break;
+        }
+      }
+      spaces.push(new Space(targetFile, targetRank));
+    };
+    // down
+    for (var i = 1; i < 8; i++) {
+      let targetFile = this.files[this.getFileIndex(file)];
+      if (targetFile === undefined) {
+        break;
+      }
+      let targetRank = rank - i;
+      if (!this.ranks.includes(targetRank)) {
+        break;
+      }
+      let allSpacesIndex = this.allSpaces.findIndex(x => x.rank === targetRank && x.file === targetFile);
+      if (this.allSpaces[allSpacesIndex].hasPiece) {
+        let targetPiece = this.getPiece(targetFile, targetRank);
+        if (this.selectedPiece.color === targetPiece?.color) {
+          break;
+        }
+      }
+      spaces.push(new Space(targetFile, targetRank));
+    };
+    // right
+    for (var i = 1; i < 8; i++) {
       let targetFile = this.files[this.getFileIndex(file) + i];
       if (targetFile === undefined) {
         break;
@@ -206,6 +281,51 @@ export class BoardComponent implements OnInit {
       }
       spaces.push(new Space(targetFile, targetRank));
     };
+    // left
+    for (var i = 1; i < 8; i++) {
+      let targetFile = this.files[this.getFileIndex(file) - i];
+      if (targetFile === undefined) {
+        break;
+      }
+      let targetRank = rank;
+      if (!this.ranks.includes(targetRank)) {
+        break;
+      }
+      let allSpacesIndex = this.allSpaces.findIndex(x => x.rank === targetRank && x.file === targetFile);
+      if (this.allSpaces[allSpacesIndex].hasPiece) {
+        let targetPiece = this.getPiece(targetFile, targetRank);
+        if (this.selectedPiece.color === targetPiece?.color) {
+          break;
+        }
+      }
+      spaces.push(new Space(targetFile, targetRank));
+    };
+    return spaces;
+  }
+
+  getQueenMoves(file: string, rank: number) : Space[] {
+    let spaces: Space[] = [];
+    spaces.push(...this.getBishopMoves(file, rank));
+    spaces.push(...this.getRookMoves(file, rank));
+    return spaces;
+  }
+
+  getKingMoves(file: string, rank: number) : Space[] {
+    let spaces: Space[] = [];
+    let validSpaces = [[-1, 1], [1, 1], [0, 1], [0, -1], [-1, 0], [1, 0], [-1, -1], [1, -1]];
+    for (let [vertical, horizontal] of validSpaces) {
+      let targetFile = this.files[this.getFileIndex(file) + vertical];
+      let targetRank = rank + horizontal;
+      let allSpacesIndex = this.allSpaces.findIndex(x => x.rank === targetRank && x.file === targetFile);
+      if (targetFile && targetRank && this.allSpaces[allSpacesIndex]) {
+        if (!this.allSpaces[allSpacesIndex].hasPiece) {
+          let targetPiece = this.getPiece(targetFile, targetRank);
+          if (this.selectedPiece.color !== targetPiece?.color) {
+            spaces.push(new Space(targetFile, targetRank));
+          }
+        }
+      }
+    }
     return spaces;
   }
 
@@ -282,9 +402,9 @@ export class BoardComponent implements OnInit {
     this.files.forEach((file, y) => {
       this.ranks.forEach((rank, x) => {
         if (this.getPiece(file, rank)) {
-          this.allSpaces.push(new Space(file, rank, true, x, y));
+          this.allSpaces.push(new Space(file, rank, true, false, x, y));
         } else {
-          this.allSpaces.push(new Space(file, rank, false, x, y));
+          this.allSpaces.push(new Space(file, rank, false, false, x, y));
         }
       })
     })
