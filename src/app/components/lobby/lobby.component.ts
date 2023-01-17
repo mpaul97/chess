@@ -1,6 +1,5 @@
 import { Component, OnInit } from '@angular/core';
 import { ChessService } from 'src/app/services/chess.service';
-import { PlayerCountPipe } from 'src/app/util/player-count.pipe';
 
 @Component({
   selector: 'app-lobby',
@@ -14,16 +13,24 @@ export class LobbyComponent implements OnInit {
   displayDialog: boolean = false
   displayJoinDialog: boolean = false
   username: string = ""
+  displayBoard: boolean = false
 
   constructor(private cs: ChessService) { }
 
   ngOnInit(): void {
-    this.cs.getRooms()
-
     this.cs.newRoomAdded.subscribe((newRooms) => {
       for(let room of newRooms) {
         this.rooms.push(room)
       }
+    })
+    this.cs.roomRefresh.subscribe((rooms) => {
+      this.rooms = []
+      for(let room of rooms) {
+        this.rooms.push(room)
+      }
+    })
+    this.cs.displayBoard.subscribe(() => {
+      this.displayBoard = true
     })
   }
 
@@ -38,5 +45,8 @@ export class LobbyComponent implements OnInit {
   joinRoom(room: string) {
     this.cs.joinRoom(room, this.username)
     this.displayJoinDialog = false
+  }
+  refreshRooms() {
+    this.cs.getRooms()
   }
 }

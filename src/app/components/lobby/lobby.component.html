@@ -1,13 +1,19 @@
-<div class="lobby">
+<div class="lobby" *ngIf="!displayBoard">
     <div class="rooms-container">
         <p-table class="rooms-table" [value]="rooms">
             <ng-template pTemplate="caption">
                 <div style="display: flex; flex-direction: row; justify-content: space-between; align-items: center">
                     <h1 style="color: white">Rooms</h1>
-                    <button type="button" pButton label="New Room"
-                            class="p-button-primary p-button-rounded"
-                            (click)="this.displayDialog = true"
-                    ></button>
+                    <div style="display: flex; flex-direction: row; justify-content: flex-end; align-items: center; gap: 10px;">
+                        <button type="button" pButton 
+                        class="p-button-secondary p-button-rounded p-button-outlined"
+                        icon="pi pi-refresh" (click)="refreshRooms()"
+                        ></button>
+                        <button type="button" pButton label="New Room"
+                                class="p-button-primary p-button-rounded"
+                                (click)="this.displayDialog = true"
+                        ></button>
+                    </div>
                 </div>
             </ng-template>
             <ng-template pTemplate="header">
@@ -32,6 +38,9 @@
             </ng-template>
         </p-table>
     </div>
+</div>
+<div class="chess-board" *ngIf="displayBoard">
+    <app-board></app-board>
 </div>
 
 <p-dialog header="Create a New Room" [(visible)]="displayDialog"
