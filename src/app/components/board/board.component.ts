@@ -1,4 +1,5 @@
 import { Component, Input, OnInit } from '@angular/core';
+import { ChessService } from 'src/app/services/chess.service';
 import { Info } from 'src/models/info';
 import { Space } from 'src/models/space';
 
@@ -24,13 +25,20 @@ export class BoardComponent implements OnInit {
 
   takenPieces: Info[] = [];
 
-  constructor() {}
+  @Input() userInfo: any = {}
+
+  constructor(private cs: ChessService) {
+    this.cs.switchTurns.subscribe((data) => {
+      
+    })
+  }
 
   ngOnInit(): void {
     this.initBlackPieces();
     this.initWhitePieces();
     this.initAllSpaces();
     this.takenPieces.push(...this.pieces);
+
   }
 
   // main logic

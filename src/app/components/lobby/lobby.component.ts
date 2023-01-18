@@ -14,6 +14,7 @@ export class LobbyComponent implements OnInit {
   displayJoinDialog: boolean = false
   username: string = ""
   displayBoard: boolean = false
+  userInfo: any = {}
 
   constructor(private cs: ChessService) { }
 
@@ -29,8 +30,17 @@ export class LobbyComponent implements OnInit {
         this.rooms.push(room)
       }
     })
-    this.cs.displayBoard.subscribe(() => {
+    this.cs.displayBoard.subscribe((res) => {
       this.displayBoard = true
+
+      if(res.playerOne.username === this.username) {
+        this.userInfo = res.playerOne
+        console.log(`You are playing as ${this.userInfo.color}`)
+      }
+      else {
+        this.userInfo = res.playerTwo
+        console.log(`You are playing as ${this.userInfo.color}`)
+      }
     })
   }
 

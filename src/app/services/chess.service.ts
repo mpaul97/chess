@@ -9,13 +9,17 @@ export class ChessService {
   newRoomAdded: EventEmitter<any> = new EventEmitter()
   roomRefresh: EventEmitter<any> = new EventEmitter()
   displayBoard: EventEmitter<any> = new EventEmitter()
+  switchTurns: EventEmitter<any> = new EventEmitter()
 
   constructor(private socket: Socket) { 
     socket.on('roomsList', (roomList: Array<any>) => {
       this.newRoomAdded.emit(roomList)
     })
-    socket.on('displayBoard', () => {
-      this.displayBoard.emit()
+    socket.on('displayBoard', (res: any) => {
+      this.displayBoard.emit(res)
+    })
+    socket.on('switchTurns', (data: any) => {
+      this.switchTurns.emit(data)
     })
   }
 

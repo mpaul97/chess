@@ -1,5 +1,5 @@
 <div class="content">  
-  <div class="container">
+  <div class="container" [ngStyle]="{'flex-direction': this.userInfo.color === 'White' ? 'column' : 'column-reverse'}">
     <div class="space" *ngFor="let space of allSpaces" [ngClass]="{ 'dark' : (space.x + space.y) % 2 !== 0 }" (click)="spaceClicked(space.file, space.rank)">
       <p class="space-name">{{ space.file }}{{ space.rank }}</p>
       <div class="piece-container" *ngFor="let pieceInfo of pieces">
@@ -19,5 +19,5 @@
       <app-piece class="taken-piece" [info]="pieceInfo" [isTaken]="true" *ngIf="pieceInfo.color === 'black'"></app-piece>
     </div>
   </div>
-</div>
+</div> 
 
