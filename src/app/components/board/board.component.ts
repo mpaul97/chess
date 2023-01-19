@@ -26,10 +26,13 @@ export class BoardComponent implements OnInit {
   takenPieces: Info[] = [];
 
   @Input() userInfo: any = {}
+  @Input() gameInfo: any = {}
 
   constructor(private cs: ChessService) {
-    this.cs.switchTurns.subscribe((data) => {
-      
+    this.cs.madeMove.subscribe((data) => {
+      this.gameInfo.turn = data.nextTurn
+
+      console.log(`Move recieved: ${data.username} moves ${data.move}`)
     })
   }
 
@@ -37,8 +40,10 @@ export class BoardComponent implements OnInit {
     this.initBlackPieces();
     this.initWhitePieces();
     this.initAllSpaces();
-    this.takenPieces.push(...this.pieces);
+  }
 
+  makeMove(username: string, move: string) {
+    this.cs.makeMove(this.gameInfo.room, username, move)
   }
 
   // main logic
@@ -52,6 +57,7 @@ export class BoardComponent implements OnInit {
         this.selectedPiece = piece;
       }
       this.findMoves(piece);
+      // this.playableSpaces = this.filterPlayableSpaces();
     }
     let isSpacePlayable = this.playableSpaces.filter(x => x.file === file && x.rank === rank)[0];
     if (isSpacePlayable) {
@@ -151,164 +157,91 @@ export class BoardComponent implements OnInit {
 
   getBishopMoves(file: string, rank: number) : Space[] {
     let spaces: Space[] = [];
+    let upRightValid: boolean = true;
+    let upLeftValid: boolean = true;
+    let downLeftValid: boolean = true;
+    let downRightValid: boolean = true;
     for (var i = 1; i < 8; i++) {
       // up right diagonal
-      let targetFile = this.files[this.getFileIndex(file) + i];
-      if (targetFile === undefined) {
-        break;
+      if (upRightValid) {
+        let [isValid, space] = this.getLongMoves(file, rank, i, [1, 1], upRightValid);
+        upRightValid = isValid;
+        spaces.push(space);
       }
-      let targetRank = rank + i;
-      if (!this.ranks.includes(targetRank)) {
-        break;
+      // up left diagonal
+      if (upLeftValid) {
+        let [isValid, space] = this.getLongMoves(file, rank, i, [-1, 1], upLeftValid);
+        upLeftValid = isValid;
+        spaces.push(space);
       }
-      let allSpacesIndex = this.allSpaces.findIndex(x => x.rank === targetRank && x.file === targetFile);
-      if (this.allSpaces[allSpacesIndex].hasPiece) {
-        let targetPiece = this.getPiece(targetFile, targetRank);
-        if (this.selectedPiece.color === targetPiece?.color) {
-          break;
-        }
+      // down left diagonal
+      if (downLeftValid) {
+        let [isValid, space] = this.getLongMoves(file, rank, i, [-1, -1], downLeftValid);
+        downLeftValid = isValid;
+        spaces.push(space);
       }
-      spaces.push(new Space(targetFile, targetRank));
-    };
-    // up left diagonal
-    for (var i = 1; i < 8; i++) {
-      let targetFile = this.files[this.getFileIndex(file) - i];
-      if (targetFile === undefined) {
-        break;
+      // down right diagonal
+      if (downLeftValid) {
+        let [isValid, space] = this.getLongMoves(file, rank, i, [1, -1], downRightValid);
+        downRightValid = isValid;
+        spaces.push(space);
       }
-      let targetRank = rank + i;
-      if (!this.ranks.includes(targetRank)) {
-        break;
-      }
-      let allSpacesIndex = this.allSpaces.findIndex(x => x.rank === targetRank && x.file === targetFile);
-      if (this.allSpaces[allSpacesIndex].hasPiece) {
-        let targetPiece = this.getPiece(targetFile, targetRank);
-        if (this.selectedPiece.color === targetPiece?.color) {
-          break;
-        }
-      }
-      spaces.push(new Space(targetFile, targetRank));
-    };
-    // down left diagonal
-    for (var i = 1; i < 8; i++) {
-      let targetFile = this.files[this.getFileIndex(file) - i];
-      if (targetFile === undefined) {
-        break;
-      }
-      let targetRank = rank - i;
-      if (!this.ranks.includes(targetRank)) {
-        break;
-      }
-      let allSpacesIndex = this.allSpaces.findIndex(x => x.rank === targetRank && x.file === targetFile);
-      if (this.allSpaces[allSpacesIndex].hasPiece) {
-        let targetPiece = this.getPiece(targetFile, targetRank);
-        if (this.selectedPiece.color === targetPiece?.color) {
-          break;
-        }
-      }
-      spaces.push(new Space(targetFile, targetRank));
-    };
-    // down right diagonal
-    for (var i = 1; i < 8; i++) {
-      let targetFile = this.files[this.getFileIndex(file) + i];
-      if (targetFile === undefined) {
-        break;
-      }
-      let targetRank = rank - i;
-      if (!this.ranks.includes(targetRank)) {
-        break;
-      }
-      let allSpacesIndex = this.allSpaces.findIndex(x => x.rank === targetRank && x.file === targetFile);
-      if (this.allSpaces[allSpacesIndex].hasPiece) {
-        let targetPiece = this.getPiece(targetFile, targetRank);
-        if (this.selectedPiece.color === targetPiece?.color) {
-          break;
-        }
-      }
-      spaces.push(new Space(targetFile, targetRank));
     };
     return spaces
   }
 
   getRookMoves(file: string, rank: number) : Space[] {
     let spaces: Space[] = [];
-    // up
+    let upValid: boolean = true;
+    let downValid: boolean = true;
+    let leftValid: boolean = true;
+    let rightValid: boolean = true;
     for (var i = 1; i < 8; i++) {
-      let targetFile = this.files[this.getFileIndex(file)];
-      if (targetFile === undefined) {
-        break;
+      // up
+      if (upValid) {
+        let [isValid, space] = this.getLongMoves(file, rank, i, [0, 1], upValid);
+        upValid = isValid;
+        spaces.push(space);
       }
-      let targetRank = rank + i;
-      if (!this.ranks.includes(targetRank)) {
-        break;
+      // down
+      if (downValid) {
+        let [isValid, space] = this.getLongMoves(file, rank, i, [0, -1], downValid);
+        downValid = isValid;
+        spaces.push(space);
       }
-      let allSpacesIndex = this.allSpaces.findIndex(x => x.rank === targetRank && x.file === targetFile);
-      if (this.allSpaces[allSpacesIndex].hasPiece) {
-        let targetPiece = this.getPiece(targetFile, targetRank);
-        if (this.selectedPiece.color === targetPiece?.color) {
-          break;
-        }
+      // left
+      if (leftValid) {
+        let [isValid, space] = this.getLongMoves(file, rank, i, [-1, 0], leftValid);
+        leftValid = isValid;
+        spaces.push(space);
       }
-      spaces.push(new Space(targetFile, targetRank));
-    };
-    // down
-    for (var i = 1; i < 8; i++) {
-      let targetFile = this.files[this.getFileIndex(file)];
-      if (targetFile === undefined) {
-        break;
+      // right
+      if (rightValid) {
+        let [isValid, space] = this.getLongMoves(file, rank, i, [1, 0], rightValid);
+        rightValid = isValid;
+        spaces.push(space);
       }
-      let targetRank = rank - i;
-      if (!this.ranks.includes(targetRank)) {
-        break;
-      }
-      let allSpacesIndex = this.allSpaces.findIndex(x => x.rank === targetRank && x.file === targetFile);
-      if (this.allSpaces[allSpacesIndex].hasPiece) {
-        let targetPiece = this.getPiece(targetFile, targetRank);
-        if (this.selectedPiece.color === targetPiece?.color) {
-          break;
-        }
-      }
-      spaces.push(new Space(targetFile, targetRank));
-    };
-    // right
-    for (var i = 1; i < 8; i++) {
-      let targetFile = this.files[this.getFileIndex(file) + i];
-      if (targetFile === undefined) {
-        break;
-      }
-      let targetRank = rank;
-      if (!this.ranks.includes(targetRank)) {
-        break;
-      }
-      let allSpacesIndex = this.allSpaces.findIndex(x => x.rank === targetRank && x.file === targetFile);
-      if (this.allSpaces[allSpacesIndex].hasPiece) {
-        let targetPiece = this.getPiece(targetFile, targetRank);
-        if (this.selectedPiece.color === targetPiece?.color) {
-          break;
-        }
-      }
-      spaces.push(new Space(targetFile, targetRank));
-    };
-    // left
-    for (var i = 1; i < 8; i++) {
-      let targetFile = this.files[this.getFileIndex(file) - i];
-      if (targetFile === undefined) {
-        break;
-      }
-      let targetRank = rank;
-      if (!this.ranks.includes(targetRank)) {
-        break;
-      }
-      let allSpacesIndex = this.allSpaces.findIndex(x => x.rank === targetRank && x.file === targetFile);
-      if (this.allSpaces[allSpacesIndex].hasPiece) {
-        let targetPiece = this.getPiece(targetFile, targetRank);
-        if (this.selectedPiece.color === targetPiece?.color) {
-          break;
-        }
-      }
-      spaces.push(new Space(targetFile, targetRank));
-    };
+    }
     return spaces;
+  }
+
+  getLongMoves(file: string, rank: number, i: number, multipliers: [number, number], isValid: boolean) : [boolean, Space] {
+    let targetFile = this.files[this.getFileIndex(file) + i*multipliers[0]];
+    if (targetFile === undefined) {
+      isValid = false;
+    }
+    let targetRank = rank + i*multipliers[1];
+    if (!this.ranks.includes(targetRank)) {
+      isValid = false;
+    }
+    let allSpacesIndex = this.allSpaces.findIndex(x => x.rank === targetRank && x.file === targetFile);
+    if (isValid && this.allSpaces[allSpacesIndex].hasPiece) {
+      let targetPiece = this.getPiece(targetFile, targetRank);
+      if (this.selectedPiece.color === targetPiece?.color) {
+        isValid = false;
+      }
+    }
+    return [isValid, new Space(targetFile, targetRank)]
   }
 
   getQueenMoves(file: string, rank: number) : Space[] {
@@ -337,6 +270,12 @@ export class BoardComponent implements OnInit {
     return spaces;
   }
 
+  // filterPlayableSpaces() : Space[] {
+  //   for (let space of this.playableSpaces) {
+      
+  //   }
+  // }
+
   // helpers
   getFileIndex(file: string) {
     return this.files.indexOf(file);
@@ -360,6 +299,7 @@ export class BoardComponent implements OnInit {
     this.playableSpaces = [];
     this.pieces = [];
     this.selectedPiece = new Info();
+    this.takenPieces = [];
     this.initBlackPieces();
     this.initWhitePieces();
     this.initAllSpaces();

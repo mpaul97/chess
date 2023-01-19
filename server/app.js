@@ -52,16 +52,27 @@ io.on('connection', (socket) => {
         console.log(`${data.username} is joining room: ${data.room}`)
         
         oldRoomData = roomsList.get(data.room)
-        newRoomData = {turn: oldRoomData.playerOne.username, playerOne: {username: oldRoomData.playerOne.username, color: oldRoomData.playerOne.color}, playerTwo: {username: data.username, color: "Black"}}
+        newRoomData = {turn: 'PlayerOne', playerOne: {username: oldRoomData.playerOne.username, color: oldRoomData.playerOne.color}, playerTwo: {username: data.username, color: "Black"}}
         roomsList.set(data.room, newRoomData)
 
         io.to(data.room).emit('roomsList', Array.from(roomsList, ([room, value]) => ({room: room, playerOne: value.playerOne, playerTwo: value.playerTwo})))
 
         if(io.of('/').adapter.rooms.get(data.room).size === 2) {
-            io.to(data.room).emit('displayBoard', roomsList.get(data.room))
+            io.to(data.room).emit('displayBoard', {room: data.room, turn: newRoomData.turn, playerOne: newRoomData.playerOne, playerTwo: newRoomData.playerTwo})
         }
 
         return callback({status: 'OK', message: `User ${data.username} is joining room ${data.room}`})
+    })
+    socket.on('makeMove', (data, callback) => {
+        roomData = roomsList.get(data.room)
+        if(roomData.turn === 'PlayerOne') {
+            roomData.turn = 'PlayerTwo'
+        }
+        else {
+            roomData.turn = 'PlayerOne'
+        }
+        roomsList.set(data.room, roomData)
+        io.to(data.room).emit('madeMove', {username: data.username, move: data.move, nextTurn: roomData.turn})
     })
 
     socket.on('disconnect', () => {

@@ -10,6 +10,7 @@ export class ChessService {
   roomRefresh: EventEmitter<any> = new EventEmitter()
   displayBoard: EventEmitter<any> = new EventEmitter()
   switchTurns: EventEmitter<any> = new EventEmitter()
+  madeMove: EventEmitter<any> = new EventEmitter()
 
   constructor(private socket: Socket) { 
     socket.on('roomsList', (roomList: Array<any>) => {
@@ -20,6 +21,9 @@ export class ChessService {
     })
     socket.on('switchTurns', (data: any) => {
       this.switchTurns.emit(data)
+    })
+    socket.on('madeMove', (data: any) => {
+      this.madeMove.emit(data)
     })
   }
 
@@ -41,6 +45,11 @@ export class ChessService {
   joinRoom(room: string, username: string) {
     this.socket.emit('joinRoom', {room: room, username: username}, (res: any) => {
       console.log(res.message)
+    })
+  }
+  makeMove(room: string, username: string, move: string) {
+    this.socket.emit('makeMove', {room: room, username: username, move: move}, (res: any) => {
+      console.log(res)
     })
   }
 }

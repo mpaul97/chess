@@ -1,4 +1,9 @@
-<div class="content">  
+ <div class="taken-container">
+  <div class="taken-piece"*ngFor="let pieceInfo of takenPieces">
+    <app-piece [info]="pieceInfo" [isTaken]="true"></app-piece>
+  </div>
+</div> 
+<div class="content">
   <div class="container" [ngStyle]="{'flex-direction': this.userInfo.color === 'White' ? 'column' : 'column-reverse'}">
     <div class="space" *ngFor="let space of allSpaces" [ngClass]="{ 'dark' : (space.x + space.y) % 2 !== 0 }" (click)="spaceClicked(space.file, space.rank)">
       <p class="space-name">{{ space.file }}{{ space.rank }}</p>
@@ -8,16 +13,10 @@
       <div class="playable" *ngIf="isPlayable(space.file, space.rank)" [ngClass]="{ 'isTakeable' : space.isTakeable}"></div>
     </div>
   </div>
-  <div class="side-container">
-    <div class="taken-container white" *ngFor="let pieceInfo of takenPieces">
-      <app-piece class="taken-piece" [info]="pieceInfo" [isTaken]="true" *ngIf="pieceInfo.color === 'white'"></app-piece>
-    </div>
-    <div class="button-container">
-      <button class="reset" (click)="reset()">Reset</button>
-    </div>
-    <div class="taken-container black" *ngFor="let pieceInfo of takenPieces">
-      <app-piece class="taken-piece" [info]="pieceInfo" [isTaken]="true" *ngIf="pieceInfo.color === 'black'"></app-piece>
-    </div>
-  </div>
-</div> 
+</div>
 
+<div>
+  <h2>{{gameInfo.turn}}'s turn</h2>
+</div>
+
+<button pButton class="p-button-primary" (click)="makeMove(this.userInfo.username, 'Nf4')">Click to Move</button>

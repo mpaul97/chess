@@ -40,7 +40,7 @@
     </div>
 </div>
 <div class="chess-board" *ngIf="displayBoard">
-    <app-board [userInfo]="this.userInfo"></app-board>
+    <app-board [userInfo]="this.userInfo" [gameInfo]="this.gameInfo"></app-board>
 </div>
 
 <p-dialog header="Create a New Room" [(visible)]="displayDialog"

@@ -15,6 +15,7 @@ export class LobbyComponent implements OnInit {
   username: string = ""
   displayBoard: boolean = false
   userInfo: any = {}
+  gameInfo: any = {}
 
   constructor(private cs: ChessService) { }
 
@@ -35,10 +36,12 @@ export class LobbyComponent implements OnInit {
 
       if(res.playerOne.username === this.username) {
         this.userInfo = res.playerOne
+        this.gameInfo = {room: res.room, turn: res.turn}
         console.log(`You are playing as ${this.userInfo.color}`)
       }
       else {
         this.userInfo = res.playerTwo
+        this.gameInfo = {room: res.room, turn: res.turn}
         console.log(`You are playing as ${this.userInfo.color}`)
       }
     })

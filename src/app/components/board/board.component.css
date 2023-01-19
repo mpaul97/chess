@@ -1,8 +1,5 @@
 .content {
   width: 100%;
-  display: flex;
-  justify-content: flex-start;
-  margin-left: 50%;
 }
 
 .container {
@@ -52,17 +49,9 @@
   opacity: 0.4;
 }
 
-.side-container {
-  background-color: gray;
-  /* padding-left: 20px; */
-  /* padding-right: 5px; */
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-}
-
 .reset {
+  width: 70px;
+  margin-top: 10px;
   font-size: 14px;
   padding: 5px;
   color: var(--light);
@@ -78,9 +67,17 @@
 }
 
 .taken-container {
-  display: inline-flex;
+  width: 556px;
+  height: 30px;
+  background-color: var(--dark);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border: 2px solid var(--light);
+  margin-bottom: 10px;
 }
 
 .taken-piece {
+  display: inline-block;
   margin-left: -20px;
 }
