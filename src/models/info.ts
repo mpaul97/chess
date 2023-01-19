@@ -4,7 +4,8 @@ export class Info {
     public type: string = '',
     public file: string = '',
     public rank: number = 0,
-    public hasMoved: boolean = false
+    public hasMoved: boolean = false,
+    public isProtected: boolean = false
   ) {}
   isWhite() {
     return this.color === 'white' ? true : false;
