@@ -30,7 +30,8 @@ export class BoardComponent implements OnInit {
   whiteInCheck: boolean = false;
   blackInCheck: boolean = false;
 
-  checkingPiece: Info = new Info();
+  whiteInMate: boolean = false;
+  blackInMate: boolean = false;
 
   constructor() {}
 
@@ -42,6 +43,10 @@ export class BoardComponent implements OnInit {
 
   // main logic
   spaceClicked(file: string, rank: number) {
+    if (this.whiteInMate || this.blackInMate) {
+      console.log('Checkmate!')
+      return;
+    } 
     let piece = this.getPiece(file, rank);
     let clickedSpaceIndex = this.allSpaces.findIndex(x => x.rank === rank && x.file === file);
     if (piece) {
@@ -52,7 +57,7 @@ export class BoardComponent implements OnInit {
       }
       this.findMoves(piece);
     };
-    let isSpacePlayable = this.playableSpaces.filter(x => x.file === file && x.rank === rank)[0];
+    let isSpacePlayable = this.playableSpaces.find(x => x.file === file && x.rank === rank);
     if (isSpacePlayable) {
       if (this.allSpaces[clickedSpaceIndex].isTakeable) {
         let takeablePiece = this.getPiece(file, rank);
@@ -69,13 +74,13 @@ export class BoardComponent implements OnInit {
         this.whiteTakeableSpaces = [];
         this.blackTakeableSpaces = [];
         this.saveTakeableSpaces();
-        this.findChecks();
+        this.findAllChecks();
         this.isWhiteMove = !this.isWhiteMove;
         this.allSpaces[pieceSpaceIndex].hasPiece = false; // old space
         this.allSpaces[clickedSpaceIndex].hasPiece = true; // new space
         this.allSpaces.map(x => x.isTakeable = false);
       };
-    }
+    };
   }
 
   findMoves(piece: Info) {
@@ -123,19 +128,31 @@ export class BoardComponent implements OnInit {
     this.playableSpaces = [];
   }
 
-  findChecks() {
+  findAllChecks() {
+    this.getCheck('white', this.blackTakeableSpaces);
+    this.getCheck('black', this.whiteTakeableSpaces);
+  }
+
+  getCheck(color: string, takeableSpaces: Space[]) {
     // white in check
-    let whiteKing = this.pieces.find(x => x.color === 'white' && x.isKing());
-    let whiteKingInTakeable = this.blackTakeableSpaces.findIndex(x => x.file === whiteKing?.file && x.rank === whiteKing?.rank);
-    if (whiteKingInTakeable !== -1) {
-      this.whiteInCheck = true;
-      // this.checkingPiece = this.getPiece()
-    };
-    // black in check
-    let blackKing = this.pieces.find(x => x.color === 'black' && x.isKing());
-    let blackKingInTakeable = this.whiteTakeableSpaces.findIndex(x => x.file === blackKing?.file && x.rank === blackKing?.rank);
-    if (blackKingInTakeable !== -1) {
-      this.blackInCheck = true;
+    let king = this.pieces.find(x => x.color === color && x.isKing());
+    let inTakeable = takeableSpaces.findIndex(x => x.file === king?.file && x.rank === king?.rank);
+    if (inTakeable !== -1) {
+      if (color === 'white') {
+        this.whiteInCheck = true;
+        let isCheckingPieceTakeable = !this.whiteTakeableSpaces.find(x => x.rank === this.selectedPiece.rank && x.file === this.selectedPiece.file);
+        if (isCheckingPieceTakeable) {
+          this.whiteInMate = true;
+          this.whiteInCheck = false;
+        }
+      } else {
+        this.blackInCheck = true;
+        let isCheckingPieceTakeable = !this.blackTakeableSpaces.find(x => x.rank === this.selectedPiece.rank && x.file === this.selectedPiece.file)
+        if (isCheckingPieceTakeable) {
+          this.blackInMate = true;
+          this.blackInCheck = false;
+        }
+      }
     };
   };
 
@@ -338,10 +355,15 @@ export class BoardComponent implements OnInit {
       let targetRank = rank + horizontal;
       let allSpacesIndex = this.allSpaces.findIndex(x => x.rank === targetRank && x.file === targetFile);
       if (targetFile && targetRank && this.allSpaces[allSpacesIndex]) {
+        let targetPiece = this.getPiece(targetFile, targetRank);
         if (!this.allSpaces[allSpacesIndex].hasPiece) {
-          let targetPiece = this.getPiece(targetFile, targetRank);
           if (this.selectedPiece.color !== targetPiece?.color) {
             spaces.push(new Space(targetFile, targetRank));
+          }
+        } else {
+          if (this.selectedPiece.color !== targetPiece?.color) {
+            this.allSpaces[allSpacesIndex].isTakeable = true;
+            spaces.push(new Space(targetFile, targetRank, true, true));
           }
         }
       }
@@ -376,6 +398,10 @@ export class BoardComponent implements OnInit {
     this.initBlackPieces();
     this.initWhitePieces();
     this.initAllSpaces();
+    this.whiteInCheck = false;
+    this.blackInCheck = false;
+    this.whiteInMate = false;
+    this.blackInMate = false;
   }
 
   // initial functions

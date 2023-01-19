@@ -13,6 +13,14 @@
       <div class="playable" *ngIf="isPlayable(space.file, space.rank)" [ngClass]="{ 'isTakeable' : space.isTakeable}"></div>
     </div>
   </div>
-  <button class="reset" (click)="reset()">Reset</button>
+  <div class="footer">
+    <button class="reset" (click)="reset()">Reset</button>
+    <div class="notation">
+      <h3 *ngIf="whiteInCheck" style="color: var(--dark);">+</h3>
+      <h3 *ngIf="blackInCheck" style="color: var(--light);">+</h3>
+      <h3 *ngIf="whiteInMate" style="color: var(--dark);">*</h3>
+      <h3 *ngIf="blackInMate" style="color: var(--light);">*</h3>
+    </div>
+  </div>
 </div>
 
