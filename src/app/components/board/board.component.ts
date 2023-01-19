@@ -18,7 +18,7 @@ export class BoardComponent implements OnInit {
   selectedPiece: Info = new Info();
 
   started: boolean = false;
-  isWhiteMove: boolean = true;
+  isYourTurn: boolean = false;
 
   allSpaces: Space[] = [];
   playableSpaces: Space[] = [];
@@ -31,8 +31,31 @@ export class BoardComponent implements OnInit {
   constructor(private cs: ChessService) {
     this.cs.madeMove.subscribe((data) => {
       this.gameInfo.turn = data.nextTurn
+      this.pieces[data.index].rank = data.rank;
+      this.pieces[data.index].file = data.file;
+      this.pieces[data.index].hasMoved = true;
+      this.playableSpaces = [];
 
-      console.log(`Move recieved: ${data.username} moves ${data.move}`)
+      let pieceSpaceIndex = this.allSpaces.findIndex(x => x.rank === data.rank && x.file === data.file);
+      let clickedSpaceIndex = this.allSpaces.findIndex(x => x.rank === data.rank && x.file === data.file);
+      this.allSpaces[pieceSpaceIndex].hasPiece = false; // old space
+      this.allSpaces[clickedSpaceIndex].hasPiece = true; // new space
+      this.allSpaces.map(x => x.isTakeable = false);
+
+      if(data.nextTurn === this.userInfo.username) {
+        this.isYourTurn = true
+      }
+      else {
+        this.isYourTurn = false
+      }
+      let letter = ''
+      if(this.pieces[data.index].type === 'knight') {
+        letter = 'N'
+      }
+      else {
+        letter = this.pieces[data.index].type[0].toUpperCase()
+      }
+      console.log(`Move recieved: ${data.username} moves ${letter}${data.file}${data.rank}`)
     })
   }
 
@@ -40,21 +63,28 @@ export class BoardComponent implements OnInit {
     this.initBlackPieces();
     this.initWhitePieces();
     this.initAllSpaces();
+
+    if(this.userInfo.color === 'White') {
+      this.isYourTurn = true
+    }
   }
 
-  makeMove(username: string, move: string) {
-    this.cs.makeMove(this.gameInfo.room, username, move)
+  makeMove(index: number, file: string, rank: number) {
+    this.cs.makeMove(this.gameInfo.room, this.userInfo.username, index, file, rank)
   }
 
   // main logic
   spaceClicked(file: string, rank: number) {
+    if(!this.isYourTurn) return 
+
     let piece = this.getPiece(file, rank);
     let clickedSpaceIndex = this.allSpaces.findIndex(x => x.rank === rank && x.file === file);
     if (piece) {
-      if (this.isWhiteMove && piece.color === 'white') {
-        this.selectedPiece = piece;
-      } else if (!this.isWhiteMove && piece.color === 'black') {
-        this.selectedPiece = piece;
+      if(this.userInfo.color.toUpperCase() !== piece.color.toUpperCase()) {
+        return
+      }
+      else {
+        this.selectedPiece = piece
       }
       this.findMoves(piece);
       // this.playableSpaces = this.filterPlayableSpaces();
@@ -72,7 +102,7 @@ export class BoardComponent implements OnInit {
         this.pieces[index].rank = rank;
         this.pieces[index].file = file;
         this.pieces[index].hasMoved = true;
-        this.isWhiteMove = !this.isWhiteMove;
+        this.makeMove(index, file, rank)
         this.playableSpaces = [];
         this.allSpaces[pieceSpaceIndex].hasPiece = false; // old space
         this.allSpaces[clickedSpaceIndex].hasPiece = true; // new space
@@ -82,15 +112,7 @@ export class BoardComponent implements OnInit {
   }
 
   findMoves(piece: Info) {
-    if (this.isWhiteMove) { // white to move
-      if (piece.isWhite()) {
-        this.getPlayableSpaces(piece);
-      }
-    } else { // black to move
-      if (!piece.isWhite()) {
-        this.getPlayableSpaces(piece);
-      }
-    }
+    this.getPlayableSpaces(piece)
   }
 
   getPlayableSpaces(piece: Info) {
@@ -294,7 +316,6 @@ export class BoardComponent implements OnInit {
 
   reset() {
     this.started = false;
-    this.isWhiteMove = true;
     this.allSpaces = [];
     this.playableSpaces = [];
     this.pieces = [];

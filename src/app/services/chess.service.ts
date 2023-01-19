@@ -47,8 +47,8 @@ export class ChessService {
       console.log(res.message)
     })
   }
-  makeMove(room: string, username: string, move: string) {
-    this.socket.emit('makeMove', {room: room, username: username, move: move}, (res: any) => {
+  makeMove(room: string, username: string, index: number, file: string, rank: number) {
+    this.socket.emit('makeMove', {room: room, username: username, index: index, file: file, rank: rank}, (res: any) => {
       console.log(res)
     })
   }

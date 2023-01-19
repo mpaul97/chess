@@ -52,7 +52,7 @@ io.on('connection', (socket) => {
         console.log(`${data.username} is joining room: ${data.room}`)
         
         oldRoomData = roomsList.get(data.room)
-        newRoomData = {turn: 'PlayerOne', playerOne: {username: oldRoomData.playerOne.username, color: oldRoomData.playerOne.color}, playerTwo: {username: data.username, color: "Black"}}
+        newRoomData = {turn: oldRoomData.playerOne.username, playerOne: {username: oldRoomData.playerOne.username, color: oldRoomData.playerOne.color}, playerTwo: {username: data.username, color: "Black"}}
         roomsList.set(data.room, newRoomData)
 
         io.to(data.room).emit('roomsList', Array.from(roomsList, ([room, value]) => ({room: room, playerOne: value.playerOne, playerTwo: value.playerTwo})))
@@ -65,14 +65,14 @@ io.on('connection', (socket) => {
     })
     socket.on('makeMove', (data, callback) => {
         roomData = roomsList.get(data.room)
-        if(roomData.turn === 'PlayerOne') {
-            roomData.turn = 'PlayerTwo'
+        if(roomData.turn === data.username && roomData.turn === roomData.playerOne.username) {
+            roomData.turn = roomData.playerTwo.username
         }
         else {
-            roomData.turn = 'PlayerOne'
+            roomData.turn = roomData.playerOne.username
         }
         roomsList.set(data.room, roomData)
-        io.to(data.room).emit('madeMove', {username: data.username, move: data.move, nextTurn: roomData.turn})
+        io.to(data.room).emit('madeMove', {username: data.username, index: data.index, rank: data.rank, file: data.file, nextTurn: roomData.turn})
     })
 
     socket.on('disconnect', () => {
