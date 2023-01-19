@@ -10,10 +10,11 @@
 }
 
 .rooms-container {
-    height: calc(100% - 80px);
+    max-height: calc(100% - 80px);
     width: 50%;
 
     margin-top: 80px;
+    margin-bottom: 80px;
 }
 
 .rooms-table {

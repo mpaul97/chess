@@ -1,6 +1,7 @@
 <div class="lobby" *ngIf="!displayBoard">
     <div class="rooms-container">
-        <p-table class="rooms-table" [value]="rooms">
+        <p-table class="rooms-table" [value]="rooms" [scrollable]="true"
+                 scrollHeight="flex">
             <ng-template pTemplate="caption">
                 <div style="display: flex; flex-direction: row; justify-content: space-between; align-items: center">
                     <h1 style="color: white">Rooms</h1>
