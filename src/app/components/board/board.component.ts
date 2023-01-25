@@ -48,6 +48,8 @@ export class BoardComponent implements OnInit {
       this.allSpaces[pieceSpaceIndex].hasPiece = false; // old space
       this.allSpaces[clickedSpaceIndex].hasPiece = true; // new space
       this.allSpaces.map(x => x.isTakeable = false);
+      this.whiteTakeableSpaces = [];
+      this.blackTakeableSpaces = [];
 
       if(data.nextTurn === this.userInfo.username) {
         this.isYourTurn = true
@@ -64,6 +66,19 @@ export class BoardComponent implements OnInit {
       }
       console.log(`Move recieved: ${data.username} moves ${letter}${data.file}${data.rank}`)
     })
+    this.cs.pieceTaken.subscribe((data: any) => {
+      if(data.username === this.userInfo.username) return 
+      console.log(`Take recieved: ${data.username} takes ${JSON.stringify(data.takeablePiece)}`)
+
+      this.pieces = this.pieces.filter((piece) => {
+        return piece.color !== data.takeablePiece.color &&
+               piece.rank !== data.takeablePiece.rank &&
+               piece.file !== data.takeablePiece.file &&
+               piece.type !== data.takeablePiece.type
+      }); 
+
+      this.takenPieces.push(data.takeablePiece as Info);
+    })
   }
 
   ngOnInit(): void {
@@ -79,14 +94,14 @@ export class BoardComponent implements OnInit {
   makeMove(index: number, file: string, rank: number) {
     this.cs.makeMove(this.gameInfo.room, this.userInfo.username, index, file, rank)
   }
-
   // main logic
   spaceClicked(file: string, rank: number) {
     if(!this.isYourTurn) return 
 
     let piece = this.getPiece(file, rank);
     let clickedSpaceIndex = this.allSpaces.findIndex(x => x.rank === rank && x.file === file);
-    if (piece) {
+
+    if (piece && !this.allSpaces[clickedSpaceIndex].isTakeable) {
       if(this.userInfo.color.toUpperCase() !== piece.color.toUpperCase()) {
         return
       }
@@ -95,12 +110,13 @@ export class BoardComponent implements OnInit {
       }
       this.findMoves(piece);
     };
-    let isSpacePlayable = this.playableSpaces.filter(x => x.file === file && x.rank === rank)[0];
+    let isSpacePlayable = this.playableSpaces.find(space => (space.rank === rank) && (space.file === file));
     if (isSpacePlayable) {
       if (this.allSpaces[clickedSpaceIndex].isTakeable) {
         let takeablePiece = this.getPiece(file, rank);
         this.pieces = this.pieces.filter(x => x !== takeablePiece);
         this.takenPieces.push(takeablePiece as Info);
+        this.cs.takePiece(takeablePiece as Info, this.gameInfo.room, this.userInfo.username)
       };
       let index = this.pieces.findIndex(x => x.rank === this.selectedPiece.rank && x.file === this.selectedPiece.file);
       let pieceSpaceIndex = this.allSpaces.findIndex(x => x.rank === this.selectedPiece.rank && x.file === this.selectedPiece.file);

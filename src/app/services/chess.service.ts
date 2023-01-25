@@ -1,5 +1,6 @@
 import { EventEmitter, Injectable } from '@angular/core';
 import { Socket } from 'ngx-socket-io';
+import { Info } from 'src/models/info';
 
 @Injectable({
   providedIn: 'root'
@@ -11,6 +12,7 @@ export class ChessService {
   displayBoard: EventEmitter<any> = new EventEmitter()
   switchTurns: EventEmitter<any> = new EventEmitter()
   madeMove: EventEmitter<any> = new EventEmitter()
+  pieceTaken: EventEmitter<any> = new EventEmitter()
 
   constructor(private socket: Socket) { 
     socket.on('roomsList', (roomList: Array<any>) => {
@@ -24,6 +26,9 @@ export class ChessService {
     })
     socket.on('madeMove', (data: any) => {
       this.madeMove.emit(data)
+    })
+    socket.on('pieceTaken', (data: any) => {
+      this.pieceTaken.emit(data)
     })
   }
 
@@ -49,6 +54,11 @@ export class ChessService {
   }
   makeMove(room: string, username: string, index: number, file: string, rank: number) {
     this.socket.emit('makeMove', {room: room, username: username, index: index, file: file, rank: rank}, (res: any) => {
+      console.log(res)
+    })
+  }
+  takePiece(takeablePiece: Info, room: string, username: string) {
+    this.socket.emit('takePiece', takeablePiece, room, username, (res: any) => {
       console.log(res)
     })
   }

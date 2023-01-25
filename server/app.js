@@ -74,6 +74,10 @@ io.on('connection', (socket) => {
         roomsList.set(data.room, roomData)
         io.to(data.room).emit('madeMove', {username: data.username, index: data.index, rank: data.rank, file: data.file, nextTurn: roomData.turn})
     })
+    socket.on('takePiece', (data, room, username, callback) => {
+        allData = {takeablePiece: data, username: username}
+        io.to(room).emit('pieceTaken', allData)
+    })
 
     socket.on('disconnect', () => {
         totalUsers--
