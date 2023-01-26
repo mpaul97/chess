@@ -19,13 +19,12 @@ app.get('/', (req, res) => {
     res.sendFile(__dirname + '/index.html');
 })
 
-
 io.on('connection', (socket) => {
     totalUsers++
     console.log('A user connected')
 
     socket.emit('roomsList', Array.from(roomsList, ([room, value]) => ({room: room, playerOne: value.playerOne, playerTwo: value.playerTwo})))
-    socket.emit('totalUsers', totalUsers)
+    io.emit('totalUsers', totalUsers)
     socket.on('getRooms', (callback) => {
         return callback(Array.from(roomsList, ([room, value]) => ({room: room, playerOne: value.playerOne, playerTwo: value.playerTwo})))
     })
@@ -72,7 +71,7 @@ io.on('connection', (socket) => {
             roomData.turn = roomData.playerOne.username
         }
         roomsList.set(data.room, roomData)
-        io.to(data.room).emit('madeMove', {username: data.username, index: data.index, rank: data.rank, file: data.file, nextTurn: roomData.turn})
+        io.to(data.room).emit('madeMove', {username: data.username, index: data.index, rank: data.rank, file: data.file, oldIndex: data.oldIndex, nextTurn: roomData.turn, didTake: data.didTake})
     })
     socket.on('takePiece', (data, room, username, callback) => {
         allData = {takeablePiece: data, username: username}
@@ -81,7 +80,13 @@ io.on('connection', (socket) => {
 
     socket.on('disconnect', () => {
         totalUsers--
+        io.emit('totalUsers', totalUsers)
+        
         console.log('A user disconnected')
+    })
+
+    socket.on('clearRooms', () => {
+        this.roomsList = new Map()
     })
 })
 

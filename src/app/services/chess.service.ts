@@ -13,6 +13,7 @@ export class ChessService {
   switchTurns: EventEmitter<any> = new EventEmitter()
   madeMove: EventEmitter<any> = new EventEmitter()
   pieceTaken: EventEmitter<any> = new EventEmitter()
+  totalUsers: EventEmitter<any> = new EventEmitter()
 
   constructor(private socket: Socket) { 
     socket.on('roomsList', (roomList: Array<any>) => {
@@ -29,6 +30,9 @@ export class ChessService {
     })
     socket.on('pieceTaken', (data: any) => {
       this.pieceTaken.emit(data)
+    })
+    socket.on('totalUsers', (totalUsers: number) => {
+      this.totalUsers.emit(totalUsers)
     })
   }
 
@@ -52,8 +56,17 @@ export class ChessService {
       console.log(res.message)
     })
   }
-  makeMove(room: string, username: string, index: number, file: string, rank: number) {
-    this.socket.emit('makeMove', {room: room, username: username, index: index, file: file, rank: rank}, (res: any) => {
+  makeMove(room: string, username: string, index: number, file: string, rank: number, oldIndex: number, didTake: boolean) {
+    this.socket.emit('makeMove', {
+      room: room, 
+      username: username, 
+      index: index, 
+      file: file, 
+      rank: rank, 
+      oldIndex: oldIndex, 
+      didTake: didTake
+    }, 
+    (res: any) => {
       console.log(res)
     })
   }

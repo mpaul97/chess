@@ -16,6 +16,8 @@ import {InputTextModule} from 'primeng/inputtext';
 import { FormsModule } from '@angular/forms';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { PlayerCountPipe } from './util/player-count.pipe';
+import { NavBarComponent } from './components/nav-bar/nav-bar.component';
+import {MenubarModule} from 'primeng/menubar';
 
 const config: SocketIoConfig = { url: 'http://localhost:3000', options: { withCredentials: false,} };
 
@@ -25,7 +27,8 @@ const config: SocketIoConfig = { url: 'http://localhost:3000', options: { withCr
     BoardComponent,
     PieceComponent,
     LobbyComponent,
-    PlayerCountPipe
+    PlayerCountPipe,
+    NavBarComponent
   ],
   imports: [
     BrowserModule,
@@ -36,6 +39,7 @@ const config: SocketIoConfig = { url: 'http://localhost:3000', options: { withCr
     DialogModule,
     InputTextModule,
     FormsModule,
+    MenubarModule,
     BrowserAnimationsModule
   ],
   providers: [],

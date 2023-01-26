@@ -51,7 +51,6 @@
 
 .reset {
   width: 70px;
-  margin-top: 10px;
   font-size: 14px;
   padding: 5px;
   color: var(--light);
@@ -80,4 +79,14 @@
 .taken-piece {
   display: inline-block;
   margin-left: -20px;
+}
+
+.footer {
+  display: inline-flex;
+  margin-top: 10px;
+}
+
+.notation {
+  background-color: gray;
+  font-size: 20px;
 }

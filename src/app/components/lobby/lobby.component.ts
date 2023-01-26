@@ -16,6 +16,7 @@ export class LobbyComponent implements OnInit {
   displayBoard: boolean = false
   userInfo: any = {}
   gameInfo: any = {}
+  totalUsers: number = 0
 
   constructor(private cs: ChessService) { }
 

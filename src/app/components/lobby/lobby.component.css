@@ -1,6 +1,6 @@
 .lobby {
     color: white;
-    height: 100%;
+    height: calc(100% - 61px);
     width: 100%;
 
     display: flex;
@@ -10,7 +10,7 @@
 }
 
 .rooms-container {
-    max-height: calc(100% - 80px);
+    max-height: 100%;
     width: 50%;
 
     margin-top: 80px;
