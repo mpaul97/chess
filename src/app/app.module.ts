@@ -18,6 +18,8 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { PlayerCountPipe } from './util/player-count.pipe';
 import { NavBarComponent } from './components/nav-bar/nav-bar.component';
 import {MenubarModule} from 'primeng/menubar';
+import {DividerModule} from 'primeng/divider';
+import { ChatComponent } from './components/chat/chat.component';
 
 const config: SocketIoConfig = { url: 'http://localhost:3000', options: { withCredentials: false,} };
 
@@ -28,7 +30,8 @@ const config: SocketIoConfig = { url: 'http://localhost:3000', options: { withCr
     PieceComponent,
     LobbyComponent,
     PlayerCountPipe,
-    NavBarComponent
+    NavBarComponent,
+    ChatComponent
   ],
   imports: [
     BrowserModule,
@@ -40,6 +43,7 @@ const config: SocketIoConfig = { url: 'http://localhost:3000', options: { withCr
     InputTextModule,
     FormsModule,
     MenubarModule,
+    DividerModule,
     BrowserAnimationsModule
   ],
   providers: [],

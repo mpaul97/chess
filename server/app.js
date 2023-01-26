@@ -81,12 +81,12 @@ io.on('connection', (socket) => {
     socket.on('disconnect', () => {
         totalUsers--
         io.emit('totalUsers', totalUsers)
-        
+
         console.log('A user disconnected')
     })
 
-    socket.on('clearRooms', () => {
-        this.roomsList = new Map()
+    socket.on('sendMessage', (message) => {
+        io.emit('recieveMessage', message)
     })
 })
 

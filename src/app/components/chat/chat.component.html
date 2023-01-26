@@ -1,0 +1,19 @@
+<div class="chat">
+    <div class="message-interface">
+        <div class="message-container">
+            <div *ngFor="let message of messages; let i = index" class="message"
+                 [ngStyle]="{'background-color': (i % 2 === 1) ? 'var(--gray-700)' : 'var(--gray-800)'}"
+            >
+                <p>{{message}}</p>
+            </div>
+        </div>
+        <div class="input-container">
+            <span class="p-input-icon-right" style="width: 100%;">
+                <i class="pi pi-send" (click)="sendMessage()"></i>
+                <input type="text" pInputText [(ngModel)]="inputMessage"
+                       (keyup.enter)="sendMessage()" [style]="{'width':'100%'}"
+                />
+            </span>
+        </div>
+    </div>
+</div>
