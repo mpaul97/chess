@@ -20,8 +20,9 @@ import { NavBarComponent } from './components/nav-bar/nav-bar.component';
 import {MenubarModule} from 'primeng/menubar';
 import {DividerModule} from 'primeng/divider';
 import { ChatComponent } from './components/chat/chat.component';
+import { environment } from '../environments/environment'
 
-const config: SocketIoConfig = { url: 'http://localhost:3000', options: { withCredentials: false,} };
+const config: SocketIoConfig = { url: environment.serverUrl, options: { withCredentials: false,} };
 
 @NgModule({
   declarations: [
