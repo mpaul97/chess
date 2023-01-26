@@ -10,6 +10,7 @@
       <div class="piece-container" *ngFor="let pieceInfo of pieces">
         <app-piece *ngIf="pieceInfo.file === space.file && pieceInfo.rank === space.rank" [info]="pieceInfo"></app-piece>
       </div>
+      <!-- <div class="playable hasPiece" *ngIf="space.hasPiece"></div> -->
       <div class="playable" *ngIf="isPlayable(space.file, space.rank)" [ngClass]="{ 'isTakeable' : space.isTakeable}"></div>
     </div>
   </div>
