@@ -9,7 +9,9 @@ import { ChatService } from 'src/app/services/chat.service';
 export class ChatComponent implements OnInit {
 
   inputMessage: string = ""
-  messages: string[] = []
+  messages: any[] = []
+  username: string = ""
+  displayDialog: boolean = false
 
   constructor(private cs: ChatService) { 
     this.cs.recieveMessage.subscribe((message) => {
@@ -18,12 +20,15 @@ export class ChatComponent implements OnInit {
   }
 
   ngOnInit(): void { 
+    this.displayDialog = true
+  }
 
+  joinChat() {
+    this.displayDialog = false
   }
 
   sendMessage() {
-    this.cs.sendMessage(this.inputMessage)
+    this.cs.sendMessage(this.inputMessage, this.username)
     this.inputMessage = ""
   }
-
 }

@@ -9,12 +9,16 @@ export class ChatService {
   recieveMessage: EventEmitter<string> = new EventEmitter()
 
   constructor(private socket: Socket) {
-    socket.on('recieveMessage', (message: string) => {
+    socket.on('recieveMessage', (message: any) => {
       this.recieveMessage.emit(message)
     })
   }
 
-  sendMessage(message: string) {
-    this.socket.emit('sendMessage', message)
+  sendMessage(message: string, username: string) {
+    this.socket.emit('sendMessage', {
+      message: message,
+      username: username,
+      timestamp: new Date(Date.now()).toLocaleTimeString()
+    })
   }
 }

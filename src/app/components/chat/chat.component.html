@@ -4,7 +4,11 @@
             <div *ngFor="let message of messages; let i = index" class="message"
                  [ngStyle]="{'background-color': (i % 2 === 1) ? 'var(--gray-700)' : 'var(--gray-800)'}"
             >
-                <p>{{message}}</p>
+                <p style="display: block; overflow-wrap: break-word; max-width: 80%;">{{message.message}}</p>
+                <div class="message-metadata">
+                    <b>{{message.username}}</b>
+                    <p>{{message.timestamp}}</p>
+                </div>
             </div>
         </div>
         <div class="input-container">
@@ -17,3 +21,19 @@
         </div>
     </div>
 </div>
+
+<p-dialog header="Join Chat" [(visible)]="displayDialog"
+          [draggable]="false" [modal]="true" [dismissableMask]="true"
+>
+    <div style="display: inline-flex; margin-top: 20px;">
+        <span class="p-float-label">
+            <input id="input" type="text" pInputText [(ngModel)]="username" (keyup.enter)="joinChat()"> 
+            <label for="input">Username</label>
+        </span>
+        <button type="button" pButton label="Join"
+                class="p-button-primary"
+                style="margin-left: 10px;"
+                (click)="joinChat()"
+        ></button>
+    </div>
+</p-dialog>
