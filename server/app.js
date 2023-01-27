@@ -13,6 +13,8 @@ const io = new socketio.Server(server, {
 })
 
 const roomsList = new Map()
+const messageCache = new Array()
+const MAX_MESSAGES_CACHED_LENGTH = 20
 let totalUsers = 0
 
 app.get('/', (req, res) => { 
@@ -64,7 +66,6 @@ io.on('connection', (socket) => {
         }
         roomsList.set(data.room, newRoomData)
 
-        // Filter this array. If room has 2 players dont emit it.
         io.to(data.room).emit('roomsList', Array.from(roomsList, ([room, value]) => roomFilter(room, value)))
 
         if(io.of('/').adapter.rooms.get(data.room).size === 2) {
@@ -106,7 +107,17 @@ io.on('connection', (socket) => {
     })
 
     socket.on('sendMessage', (message) => {
+        messageCache.push(message)
+
+        if(messageCache.length > MAX_MESSAGES_CACHED_LENGTH) {
+            messageCache.shift()
+        }
+
         io.emit('recieveMessage', message)
+    })
+    socket.on('getMessages', () => {
+        console.log('sending')
+        socket.emit('recieveMessages', messageCache)
     })
 })
 

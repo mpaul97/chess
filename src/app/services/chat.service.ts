@@ -7,10 +7,14 @@ import { Socket } from 'ngx-socket-io';
 export class ChatService {
 
   recieveMessage: EventEmitter<string> = new EventEmitter()
+  recieveMessages: EventEmitter<any[]> = new EventEmitter()
 
   constructor(private socket: Socket) {
     socket.on('recieveMessage', (message: any) => {
       this.recieveMessage.emit(message)
+    })
+    socket.on('recieveMessages', (messages: any[]) => {
+      this.recieveMessages.emit(messages)
     })
   }
 
@@ -19,6 +23,11 @@ export class ChatService {
       message: message,
       username: username,
       timestamp: new Date(Date.now()).toLocaleTimeString()
+    })
+  }
+  getMessages() {
+    this.socket.emit('getMessages', (messages: any[]) => {
+      this.recieveMessages.emit(messages)
     })
   }
 }

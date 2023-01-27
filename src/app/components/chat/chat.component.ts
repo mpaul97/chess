@@ -17,10 +17,14 @@ export class ChatComponent implements OnInit {
     this.cs.recieveMessage.subscribe((message) => {
       this.messages.push(message)
     })
+    this.cs.recieveMessages.subscribe((messages) => {
+      this.messages.push(...messages)
+    })
   }
 
   ngOnInit(): void { 
     this.displayDialog = true
+    this.cs.getMessages()
   }
 
   joinChat() {
