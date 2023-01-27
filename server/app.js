@@ -112,12 +112,10 @@ io.on('connection', (socket) => {
             io.to(room).emit('otherPartyDisconnect')
             roomsList.delete(room)
         })
-        console.log(roomsList)
     })
     socket.on('disconnect', () => {
         totalUsers--
         io.emit('totalUsers', totalUsers)
-
         console.log('A user disconnected')
     })
 
