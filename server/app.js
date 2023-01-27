@@ -23,10 +23,11 @@ io.on('connection', (socket) => {
     totalUsers++
     console.log('A user connected')
 
-    socket.emit('roomsList', Array.from(roomsList, ([room, value]) => ({room: room, playerOne: value.playerOne, playerTwo: value.playerTwo})))
+    socket.emit('roomsList', Array.from(roomsList, ([room, value]) => roomFilter(room, value)))
     io.emit('totalUsers', totalUsers)
+    
     socket.on('getRooms', (callback) => {
-        return callback(Array.from(roomsList, ([room, value]) => ({room: room, playerOne: value.playerOne, playerTwo: value.playerTwo})))
+        return callback(Array.from(roomsList, ([room, value]) => roomFilter(room, value)))
     })
     socket.on('newRoom', ({username}, callback) => {
         let room = { 
@@ -40,7 +41,6 @@ io.on('connection', (socket) => {
         console.log("New room: " + `${key}` + " was created")
         return callback({message: `User: ${username} is joining room: ${key}`, roomObject: [room]})
     })
-
     socket.on('joinRoom', (data, callback) => {
         console.log(io.of('/').adapter.rooms.get(data.room))
         console.log(io.of('/').adapter.rooms.get(data.room).size)
@@ -51,10 +51,21 @@ io.on('connection', (socket) => {
         console.log(`${data.username} is joining room: ${data.room}`)
         
         oldRoomData = roomsList.get(data.room)
-        newRoomData = {turn: oldRoomData.playerOne.username, playerOne: {username: oldRoomData.playerOne.username, color: oldRoomData.playerOne.color}, playerTwo: {username: data.username, color: "Black"}}
+        newRoomData = {
+            turn: oldRoomData.playerOne.username,
+            playerOne: {
+                username: oldRoomData.playerOne.username, 
+                color: oldRoomData.playerOne.color
+            },
+            playerTwo: {
+                username: data.username,
+                color: "Black"
+            }
+        }
         roomsList.set(data.room, newRoomData)
 
-        io.to(data.room).emit('roomsList', Array.from(roomsList, ([room, value]) => ({room: room, playerOne: value.playerOne, playerTwo: value.playerTwo})))
+        // Filter this array. If room has 2 players dont emit it.
+        io.to(data.room).emit('roomsList', Array.from(roomsList, ([room, value]) => roomFilter(room, value)))
 
         if(io.of('/').adapter.rooms.get(data.room).size === 2) {
             io.to(data.room).emit('displayBoard', {room: data.room, turn: newRoomData.turn, playerOne: newRoomData.playerOne, playerTwo: newRoomData.playerTwo})
@@ -71,7 +82,16 @@ io.on('connection', (socket) => {
             roomData.turn = roomData.playerOne.username
         }
         roomsList.set(data.room, roomData)
-        io.to(data.room).emit('madeMove', {username: data.username, index: data.index, rank: data.rank, file: data.file, oldIndex: data.oldIndex, nextTurn: roomData.turn, didTake: data.didTake})
+        io.to(data.room).emit('madeMove', {
+            username: data.username, 
+            index: data.index, 
+            rank: data.rank, 
+            file: data.file,
+            oldIndex: data.oldIndex, 
+            nextTurn: roomData.turn,
+            didTake: 
+            data.didTake
+        })
     })
     socket.on('takePiece', (data, room, username, callback) => {
         allData = {takeablePiece: data, username: username}
@@ -93,3 +113,20 @@ io.on('connection', (socket) => {
 server.listen(port, () => {
     console.log(`Server is up on port ${port}!`)
 })
+
+
+
+
+/* UTILITY FUNCTIONS */
+function roomFilter(room, value) {
+    if((value.playerOne && !value.playerTwo) || (!value.playerOne && value.playerTwo)) {
+        return {
+            room: room, 
+            playerOne: value.playerOne, 
+            playerTwo: value.playerTwo
+        }
+    } 
+    else {
+        return 
+    }
+}
