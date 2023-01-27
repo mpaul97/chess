@@ -14,6 +14,7 @@ export class ChessService {
   madeMove: EventEmitter<any> = new EventEmitter()
   pieceTaken: EventEmitter<any> = new EventEmitter()
   totalUsers: EventEmitter<any> = new EventEmitter()
+  otherPartyDisconnect: EventEmitter<any> = new EventEmitter()
 
   constructor(private socket: Socket) { 
     socket.on('roomsList', (roomList: Array<any>) => {
@@ -33,6 +34,9 @@ export class ChessService {
     })
     socket.on('totalUsers', (totalUsers: number) => {
       this.totalUsers.emit(totalUsers)
+    })
+    socket.on('otherPartyDisconnect', () => {
+      this.otherPartyDisconnect.emit('otherPartyDisconnect')
     })
   }
 

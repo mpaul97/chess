@@ -27,7 +27,7 @@ io.on('connection', (socket) => {
 
     socket.emit('roomsList', Array.from(roomsList, ([room, value]) => roomFilter(room, value)))
     io.emit('totalUsers', totalUsers)
-    
+
     socket.on('getRooms', (callback) => {
         return callback(Array.from(roomsList, ([room, value]) => roomFilter(room, value)))
     })
@@ -69,7 +69,12 @@ io.on('connection', (socket) => {
         io.to(data.room).emit('roomsList', Array.from(roomsList, ([room, value]) => roomFilter(room, value)))
 
         if(io.of('/').adapter.rooms.get(data.room).size === 2) {
-            io.to(data.room).emit('displayBoard', {room: data.room, turn: newRoomData.turn, playerOne: newRoomData.playerOne, playerTwo: newRoomData.playerTwo})
+            io.to(data.room).emit('displayBoard', {
+                room: data.room, 
+                turn: newRoomData.turn, 
+                playerOne: newRoomData.playerOne, 
+                playerTwo: newRoomData.playerTwo
+            })
         }
 
         return callback({status: 'OK', message: `User ${data.username} is joining room ${data.room}`})
@@ -90,8 +95,7 @@ io.on('connection', (socket) => {
             file: data.file,
             oldIndex: data.oldIndex, 
             nextTurn: roomData.turn,
-            didTake: 
-            data.didTake
+            didTake: data.didTake
         })
     })
     socket.on('takePiece', (data, room, username, callback) => {
@@ -99,6 +103,13 @@ io.on('connection', (socket) => {
         io.to(room).emit('pieceTaken', allData)
     })
 
+    socket.on('disconnecting', () => {
+        socket.rooms.forEach((room) => {
+            io.to(room).emit('otherPartyDisconnect')
+            roomsList.delete(room)
+        })
+        console.log(roomsList)
+    })
     socket.on('disconnect', () => {
         totalUsers--
         io.emit('totalUsers', totalUsers)
@@ -116,7 +127,6 @@ io.on('connection', (socket) => {
         io.emit('recieveMessage', message)
     })
     socket.on('getMessages', () => {
-        console.log('sending')
         socket.emit('recieveMessages', messageCache)
     })
 })
@@ -124,8 +134,6 @@ io.on('connection', (socket) => {
 server.listen(port, () => {
     console.log(`Server is up on port ${port}!`)
 })
-
-
 
 
 /* UTILITY FUNCTIONS */

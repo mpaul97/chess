@@ -86,6 +86,9 @@ export class BoardComponent implements OnInit {
       this.pieces.splice(index, 1)
       this.takenPieces.push(data.takeablePiece as Info);
     })
+    this.cs.otherPartyDisconnect.subscribe(() => {
+      location.reload()
+    })
   }
 
   ngOnInit(): void {
