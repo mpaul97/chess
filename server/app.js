@@ -80,6 +80,10 @@ io.on('connection', (socket) => {
         return callback({status: 'OK', message: `User ${data.username} is joining room ${data.room}`})
     })
     socket.on('makeMove', (data, callback) => {
+        if(!roomsList.has(data.room)) {
+            return
+        }
+        
         roomData = roomsList.get(data.room)
         if(roomData.turn === data.username && roomData.turn === roomData.playerOne.username) {
             roomData.turn = roomData.playerTwo.username
