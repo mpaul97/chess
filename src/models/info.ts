@@ -5,7 +5,8 @@ export class Info {
     public file: string = '',
     public rank: number = 0,
     public hasMoved: boolean = false,
-    public isProtected: boolean = false
+    public isProtected: boolean = false,
+    public isPinned: boolean = false
   ) {}
   isWhite() {
     return this.color === 'white' ? true : false;

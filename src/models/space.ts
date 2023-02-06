@@ -8,6 +8,7 @@ export class Space {
     public isTakeable: boolean = false,
     public x: number = 0,
     public y: number = 0,
-    public directionAbbr: string = ''
+    public directionAbbr: string = '',
+    public isKingSpace: boolean = false
   ) {}
 }

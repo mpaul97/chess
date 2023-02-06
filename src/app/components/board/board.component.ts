@@ -40,6 +40,9 @@ export class BoardComponent implements OnInit {
   allWhitePlayableSpaces: Space[] = [];
   allBlackPlayableSpaces: Space[] = [];
 
+  pawnWhiteTakeableSpaces: Space[] = [];
+  pawnBlackTakeableSpaces: Space[] = [];
+
   lastMovedPiece: Info = new Info();
 
   isSaving: boolean = false;
@@ -113,6 +116,7 @@ export class BoardComponent implements OnInit {
         this.blackInCheck = false;
         this.savePlayableSpaces();
         this.findAllChecks();
+        this.pieces.map(x => x.isProtected = false);
       };
     };
   }
@@ -183,11 +187,11 @@ export class BoardComponent implements OnInit {
         let firstTakeableSpace = this.allSpaces.find(x => x.file === this.files[this.getFileIndex(piece.file)-1] && x.rank === piece.rank + 1*multiplier);
         let secondTakeableSpace = this.allSpaces.find(x => x.file === this.files[this.getFileIndex(piece.file)+1] && x.rank === piece.rank + 1*multiplier);
         if (piece.isWhite()) {
-          if (firstTakeableSpace) this.allWhitePlayableSpaces.push(firstTakeableSpace);
-          if (secondTakeableSpace) this.allWhitePlayableSpaces.push(secondTakeableSpace);
+          if (firstTakeableSpace) this.pawnWhiteTakeableSpaces.push(firstTakeableSpace);
+          if (secondTakeableSpace) this.pawnWhiteTakeableSpaces.push(secondTakeableSpace);
         } else {
-          if (firstTakeableSpace) this.allBlackPlayableSpaces.push(firstTakeableSpace);
-          if (secondTakeableSpace) this.allBlackPlayableSpaces.push(secondTakeableSpace);
+          if (firstTakeableSpace) this.pawnBlackTakeableSpaces.push(firstTakeableSpace);
+          if (secondTakeableSpace) this.pawnBlackTakeableSpaces.push(secondTakeableSpace);
         }
       }
       for (let space of this.playableSpaces) {
@@ -200,12 +204,10 @@ export class BoardComponent implements OnInit {
             }
           }
         if (!space.hasPiece) {
-          if (!piece.isPawn()) {
-            if (piece.isWhite()) {
-              this.allWhitePlayableSpaces.push(space);
-            } else {
-              this.allBlackPlayableSpaces.push(space);
-            }
+          if (piece.isWhite()) {
+            this.allWhitePlayableSpaces.push(space);
+          } else {
+            this.allBlackPlayableSpaces.push(space);
           }
         }
       }
@@ -230,7 +232,7 @@ export class BoardComponent implements OnInit {
         if (king) {
           this.blockingMoves = this.getBlockingMoves(king);
           this.kingPlayableSpaces = this.playableSpaces;
-          let isCheckingPieceTakeable = !this.whiteTakeableSpaces.find(x => x.rank === this.selectedPiece.rank && x.file === this.selectedPiece.file);
+          let isCheckingPieceTakeable = this.whiteTakeableSpaces.find(x => x.rank === this.lastMovedPiece.rank && x.file === this.lastMovedPiece.file);
           if (!isCheckingPieceTakeable && this.playableSpaces.length === 0 && this.blockingMoves.length === 0) {
             this.whiteInMate = true;
             this.whiteInCheck = false;
@@ -254,7 +256,6 @@ export class BoardComponent implements OnInit {
   getBlockingMoves(king: Info) : Space[] {
     let spaces = [];
     let takeableSpaces = king.isWhite() ? this.blackTakeableSpaces : this.whiteTakeableSpaces;
-    console.log(takeableSpaces)
     let kingPosition = [king.file, king.rank];
     let kingTakingDirectionAbbr = takeableSpaces.find(x => x.file === kingPosition[0] && x.rank === kingPosition[1])?.directionAbbr;
     let direction = this.directions.find(x => x.abbr === kingTakingDirectionAbbr);
@@ -270,9 +271,11 @@ export class BoardComponent implements OnInit {
         if (!targetRank) break;
         let playableSpaces = king.isWhite() ? this.allWhitePlayableSpaces : this.allBlackPlayableSpaces;
         let space = playableSpaces.find(x => x.file === targetFile && x.rank === targetRank);
-        if (space) spaces.push(space);
+        let sameSpaces = playableSpaces.filter(x => x.file === targetFile && x.rank === targetRank);
+        if (space && (space.isKingSpace && sameSpaces.length < 1)) spaces.push(space);
       }
     }
+    console.log(spaces)
     return spaces;
   };
 
@@ -488,14 +491,16 @@ export class BoardComponent implements OnInit {
           if (!this.allSpaces[allSpacesIndex].hasPiece) {
             let playableSpaces = this.selectedPiece.isWhite() ? this.allBlackPlayableSpaces : this.allWhitePlayableSpaces;
             if (!this.isSaving && !playableSpaces.find(x => x.file === targetFile && x.rank === targetRank)) {
-              spaces.push(new Space(targetFile, targetRank));
+              spaces.push(new Space(targetFile, targetRank, false, false, 0, 0, '', true));
             } else if (this.isSaving) {
-              spaces.push(new Space(targetFile, targetRank));
+              spaces.push(new Space(targetFile, targetRank, false, false, 0, 0, '', true));
             }
           } else {
-            if (this.selectedPiece.color !== targetPiece?.color && !targetPiece?.isProtected) {
-              this.allSpaces[allSpacesIndex].isTakeable = true;
-              spaces.push(new Space(targetFile, targetRank, true, true));
+            if (this.selectedPiece.color.length > 0) {
+              if (this.selectedPiece.color !== targetPiece?.color && !targetPiece?.isProtected) {
+                this.allSpaces[allSpacesIndex].isTakeable = true;
+                spaces.push(new Space(targetFile, targetRank, true, true, 0, 0, '', true));
+              }
             }
           }
         }
