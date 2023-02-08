@@ -269,15 +269,27 @@ export class BoardComponent implements OnInit {
         if (!targetFile) break;
         let targetRank = this.ranks[kingRankIndex] + inverseDirection[1]*i;
         if (!targetRank) break;
+        if (this.getPiece(targetFile, targetRank)) break;
         let playableSpaces = king.isWhite() ? this.allWhitePlayableSpaces : this.allBlackPlayableSpaces;
         let space = playableSpaces.find(x => x.file === targetFile && x.rank === targetRank);
         let sameSpaces = playableSpaces.filter(x => x.file === targetFile && x.rank === targetRank);
-        if (space && (space.isKingSpace && sameSpaces.length < 1)) spaces.push(space);
+        if (space && ((space.isKingSpace && sameSpaces.length < 1) || (!space.isKingSpace))) spaces.push(space);
       }
     }
-    console.log(spaces)
     return spaces;
   };
+
+  // pins
+  checkKingBehind(space: Space) {
+    let directionAbbr = space.directionAbbr;
+    console.log(space)
+    let direction = this.directions.find(x => x.abbr === directionAbbr);
+    if (direction) {
+      let targetFile = this.files[this.getFileIndex(space.file)+direction.x];
+      let targetRank = this.ranks[(space.rank-1)+direction.y];
+      console.log(targetFile, targetRank)
+    }
+  }
 
   // piece moves
   getPawnMoves(piece: Info) : Space[] {
@@ -459,6 +471,7 @@ export class BoardComponent implements OnInit {
       } else {
         this.allSpaces[allSpacesIndex].isTakeable = true;
         takeableSpace = new Space(targetFile, targetRank, true, true, 0, 0, direction);
+        this.checkKingBehind(takeableSpace);
         isTakeable = true;
         isValid = false;
       }
