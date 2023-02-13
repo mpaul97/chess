@@ -49,16 +49,16 @@ export class BoardComponent implements OnInit {
 
   takenPieces: Info[] = [];
 
+  blockingMoves: Space[] = [];
+
+  kingPlayableSpaces: Space[] = [];
+
   whiteInCheck: boolean = false;
   blackInCheck: boolean = false;
 
   // in check, no blocking or taking moves, no king moves
   whiteInMate: boolean = false;
   blackInMate: boolean = false;
-
-  blockingMoves: Space[] = [];
-
-  kingPlayableSpaces: Space[] = [];
 
   constructor() {}
 
@@ -282,12 +282,23 @@ export class BoardComponent implements OnInit {
   // pins
   checkKingBehind(space: Space) {
     let directionAbbr = space.directionAbbr;
-    console.log(space)
     let direction = this.directions.find(x => x.abbr === directionAbbr);
     if (direction) {
-      let targetFile = this.files[this.getFileIndex(space.file)+direction.x];
-      let targetRank = this.ranks[(space.rank-1)+direction.y];
-      console.log(targetFile, targetRank)
+      for (var i = 1; i <= 8; i++) {
+        let targetFile = this.files[this.getFileIndex(space.file)+direction.x*i];
+        if (!targetFile) break;
+        let targetRank = this.ranks[this.ranks.indexOf(space.rank + direction.y*i)];
+        if (!targetRank) break;
+        let targetPiece = this.getPiece(targetFile, targetRank);
+        if (targetPiece && targetPiece.isKing()){
+          let pinPiece = this.getPiece(space.file, space.rank);
+          if (pinPiece) {
+            let pieceIndex = this.pieces.indexOf(pinPiece);
+            this.pieces[pieceIndex].isPinned = true;
+            this.pieces[pieceIndex].pinnedDir = direction;
+          }
+        }
+      }
     }
   }
 
@@ -297,6 +308,9 @@ export class BoardComponent implements OnInit {
     let multiplier: number = piece.isWhite() ? 1 : -1;
     let firstSpace = this.allSpaces.find(x => x.file === piece.file && x.rank === piece.rank + 1*multiplier);
     let secondSpace = this.allSpaces.find(x => x.file === piece.file && x.rank === piece.rank + 2*multiplier);
+    if (piece.pinnedDir.y === multiplier*-1) {
+      console.log('can move')
+    }
     if (!piece.hasMoved) {
       if (!firstSpace?.hasPiece) {
         spaces.push(new Space(piece.file, piece.rank + 1*multiplier));

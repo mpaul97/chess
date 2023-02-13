@@ -1,3 +1,5 @@
+import { Direction } from "./direction";
+
 export class Info {
   constructor(
     public color: string = '',
@@ -6,7 +8,8 @@ export class Info {
     public rank: number = 0,
     public hasMoved: boolean = false,
     public isProtected: boolean = false,
-    public isPinned: boolean = false
+    public isPinned: boolean = false,
+    public pinnedDir: Direction = new Direction()
   ) {}
   isWhite() {
     return this.color === 'white' ? true : false;
