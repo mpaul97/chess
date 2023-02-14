@@ -83,11 +83,15 @@ export class BoardComponent implements OnInit {
     if (piece) {
       if (this.isWhiteMove && piece.color === 'white') {
         this.selectedPiece = piece;
+        this.allSpaces.map(x => x.containsSelectedPiece = false);
+        this.allSpaces[clickedSpaceIndex].containsSelectedPiece = true;
       } else if (!this.isWhiteMove && piece.color === 'black') {
         this.selectedPiece = piece;
+        this.allSpaces.map(x => x.containsSelectedPiece = false);
+        this.allSpaces[clickedSpaceIndex].containsSelectedPiece = true;
       }
       this.findMoves(piece);
-    };
+    }
     let isSpacePlayable = this.playableSpaces.find(x => x.file === file && x.rank === rank);
     if (isSpacePlayable) {
       if (this.allSpaces[clickedSpaceIndex].isTakeable) {
@@ -110,13 +114,13 @@ export class BoardComponent implements OnInit {
         this.isWhiteMove = !this.isWhiteMove;
         this.allSpaces[pieceSpaceIndex].hasPiece = false; // old space
         this.allSpaces[clickedSpaceIndex].hasPiece = true; // new space
-        this.allSpaces.map(x => x.isTakeable = false);
+        this.allSpaces.map((x) => {x.isTakeable = false; x.containsSelectedPiece = false});
         this.lastMovedPiece = this.selectedPiece;
         this.whiteInCheck = false;
         this.blackInCheck = false;
         this.savePlayableSpaces();
         this.findAllChecks();
-        this.pieces.map(x => x.isProtected = false);
+        this.pieces.map((x) => { x.isProtected = false; x.isPinned = false; x.pinnedDir = new Direction() });
       };
     };
   }
@@ -308,21 +312,20 @@ export class BoardComponent implements OnInit {
     let multiplier: number = piece.isWhite() ? 1 : -1;
     let firstSpace = this.allSpaces.find(x => x.file === piece.file && x.rank === piece.rank + 1*multiplier);
     let secondSpace = this.allSpaces.find(x => x.file === piece.file && x.rank === piece.rank + 2*multiplier);
-    if (piece.pinnedDir.y === multiplier*-1) {
-      console.log('can move')
+    if (!piece.isPinned || (piece.pinnedDir.x === 0 && piece.pinnedDir.y === multiplier*-1)) {
+      if (!piece.hasMoved) {
+        if (!firstSpace?.hasPiece) {
+          spaces.push(new Space(piece.file, piece.rank + 1*multiplier));
+        };
+        if (!firstSpace?.hasPiece && !secondSpace?.hasPiece) {
+          spaces.push(new Space(piece.file, piece.rank + 2*multiplier));
+        };
+      } else {
+        if (!firstSpace?.hasPiece) {
+          spaces.push(new Space(piece.file, piece.rank + 1*multiplier));
+        };
+      };
     }
-    if (!piece.hasMoved) {
-      if (!firstSpace?.hasPiece) {
-        spaces.push(new Space(piece.file, piece.rank + 1*multiplier));
-      };
-      if (!firstSpace?.hasPiece && !secondSpace?.hasPiece) {
-        spaces.push(new Space(piece.file, piece.rank + 2*multiplier));
-      };
-    } else {
-      if (!firstSpace?.hasPiece) {
-        spaces.push(new Space(piece.file, piece.rank + 1*multiplier));
-      };
-    };
     let firstTakeableSpace = this.allSpaces.find(x => x.file === this.files[this.getFileIndex(piece.file)-1] && x.rank === piece.rank + 1*multiplier);
     let secondTakeableSpace = this.allSpaces.find(x => x.file === this.files[this.getFileIndex(piece.file)+1] && x.rank === piece.rank + 1*multiplier);
     if (firstTakeableSpace) {
@@ -352,24 +355,26 @@ export class BoardComponent implements OnInit {
   getKnightMoves(file: string, rank: number) : Space[] {
     let spaces: Space[] = [];
     let validSpaces = [[1, 2], [-1, 2], [-2, 1], [2, 1], [1, -2], [-1, -2], [-2, -1], [2, -1]];
-    for (let [vertical, horizontal] of validSpaces) {
-      let targetFile = this.files[this.getFileIndex(file) + vertical];
-      let targetRank = rank + horizontal;
-      let allSpacesIndex = this.allSpaces.findIndex(x => x.rank === targetRank && x.file === targetFile);
-      if (targetFile && targetRank && this.allSpaces[allSpacesIndex]) {
-        if (!this.allSpaces[allSpacesIndex].hasPiece) {
-          let targetPiece = this.getPiece(targetFile, targetRank);
-          if (this.selectedPiece.color !== targetPiece?.color) {
-            spaces.push(new Space(targetFile, targetRank));
-          } else if (this.selectedPiece.color === targetPiece.color) {
-            let pieceIndex = this.pieces.findIndex(x => x === targetPiece);
-            this.pieces[pieceIndex].isProtected = true;
-          }
-        } else {
-          let targetPiece = this.getPiece(targetFile, targetRank);
-          if (this.selectedPiece.color !== targetPiece?.color) {
-            this.allSpaces[allSpacesIndex].isTakeable = true;
-            spaces.push(new Space(targetFile, targetRank, true, true));
+    if (!this.selectedPiece.isPinned) {
+      for (let [vertical, horizontal] of validSpaces) {
+        let targetFile = this.files[this.getFileIndex(file) + vertical];
+        let targetRank = rank + horizontal;
+        let allSpacesIndex = this.allSpaces.findIndex(x => x.rank === targetRank && x.file === targetFile);
+        if (targetFile && targetRank && this.allSpaces[allSpacesIndex]) {
+          if (!this.allSpaces[allSpacesIndex].hasPiece) {
+            let targetPiece = this.getPiece(targetFile, targetRank);
+            if (this.selectedPiece.color !== targetPiece?.color) {
+              spaces.push(new Space(targetFile, targetRank));
+            } else if (this.selectedPiece.color === targetPiece.color) {
+              let pieceIndex = this.pieces.findIndex(x => x === targetPiece);
+              this.pieces[pieceIndex].isProtected = true;
+            }
+          } else {
+            let targetPiece = this.getPiece(targetFile, targetRank);
+            if (this.selectedPiece.color !== targetPiece?.color) {
+              this.allSpaces[allSpacesIndex].isTakeable = true;
+              spaces.push(new Space(targetFile, targetRank, true, true));
+            }
           }
         }
       }
@@ -465,6 +470,9 @@ export class BoardComponent implements OnInit {
 
   getLongMoves(file: string, rank: number, i: number, multipliers: [number, number], isValid: boolean) : [boolean, Space, boolean] {
     let direction = this.directions.find(x => x.x === multipliers[0] && x.y === multipliers[1])?.abbr;
+    if (this.selectedPiece.isPinned && this.getInverseDirection(this.selectedPiece.pinnedDir.abbr)?.abbr !== direction) {
+      console.log(this.selectedPiece)
+    }
     let targetFile = this.files[this.getFileIndex(file) + i*multipliers[0]];
     let isTakeable = false;
     let takeableSpace = undefined;
@@ -567,6 +575,20 @@ export class BoardComponent implements OnInit {
     this.blackInCheck = false;
     this.whiteInMate = false;
     this.blackInMate = false;
+  }
+
+  getInverseDirection(abbr: string) {
+    if (abbr.includes('u')) {
+      abbr = abbr.replace('u','d');
+    } else if (abbr.includes('d')) {
+      abbr = abbr.replace('d','u');
+    };
+    if (abbr.includes('l')) {
+      abbr = abbr.replace('l','r');
+    } else if (abbr.includes('r')) {
+      abbr = abbr.replace('r','l');
+    };
+    return this.directions.find(x => x.abbr === abbr);
   }
 
   // initial functions

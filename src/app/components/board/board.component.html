@@ -6,11 +6,10 @@
 <div class="content">
   <div class="container">
     <div class="space" *ngFor="let space of allSpaces" [ngClass]="{ 'dark' : (space.x + space.y) % 2 !== 0 }" (click)="spaceClicked(space.file, space.rank)">
-      <p class="space-name">{{ space.file }}{{ space.rank }}</p>
+      <p class="space-name" [ngClass]="{ selected: space.containsSelectedPiece }">{{ space.file }}{{ space.rank }}</p>
       <div class="piece-container" *ngFor="let pieceInfo of pieces">
         <app-piece *ngIf="pieceInfo.file === space.file && pieceInfo.rank === space.rank" [info]="pieceInfo"></app-piece>
       </div>
-      <!-- <div class="playable hasPiece" *ngIf="space.hasPiece"></div> -->
       <div class="playable" *ngIf="isPlayable(space.file, space.rank)" [ngClass]="{ 'isTakeable' : space.isTakeable}"></div>
     </div>
   </div>

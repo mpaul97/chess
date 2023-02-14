@@ -97,3 +97,8 @@
   background-color: gray;
   font-size: 20px;
 }
+
+.selected {
+  color: red;
+  font-style: italic;
+}

@@ -9,6 +9,7 @@ export class Space {
     public x: number = 0,
     public y: number = 0,
     public directionAbbr: string = '',
-    public isKingSpace: boolean = false
+    public isKingSpace: boolean = false,
+    public containsSelectedPiece = false
   ) {}
 }
