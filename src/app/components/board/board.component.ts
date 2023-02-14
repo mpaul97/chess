@@ -470,19 +470,23 @@ export class BoardComponent implements OnInit {
 
   getLongMoves(file: string, rank: number, i: number, multipliers: [number, number], isValid: boolean) : [boolean, Space, boolean] {
     let direction = this.directions.find(x => x.x === multipliers[0] && x.y === multipliers[1])?.abbr;
-    if (this.selectedPiece.isPinned && this.getInverseDirection(this.selectedPiece.pinnedDir.abbr)?.abbr !== direction) {
-      console.log(this.selectedPiece)
-    }
     let targetFile = this.files[this.getFileIndex(file) + i*multipliers[0]];
     let isTakeable = false;
     let takeableSpace = undefined;
     if (targetFile === undefined) {
       isValid = false;
-    }
+    };
     let targetRank = rank + i*multipliers[1];
     if (!this.ranks.includes(targetRank)) {
       isValid = false;
-    }
+    };
+    if (this.selectedPiece.isPinned) {
+      let inverseDirection = this.getInverseDirection(this.selectedPiece.pinnedDir.abbr)?.abbr;
+      if (direction !== inverseDirection) {
+        console.log(this.selectedPiece, targetFile, targetRank)
+        isValid = false;
+      }
+    };
     let allSpacesIndex = this.allSpaces.findIndex(x => x.rank === targetRank && x.file === targetFile);
     if (isValid && this.allSpaces[allSpacesIndex].hasPiece) {
       let targetPiece = this.getPiece(targetFile, targetRank);
@@ -497,7 +501,7 @@ export class BoardComponent implements OnInit {
         isTakeable = true;
         isValid = false;
       }
-    }
+    };
     if (takeableSpace) {
       return [isValid, takeableSpace, isTakeable]
     }
