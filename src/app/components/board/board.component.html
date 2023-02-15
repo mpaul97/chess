@@ -10,7 +10,13 @@
       <div class="piece-container" *ngFor="let pieceInfo of pieces">
         <app-piece *ngIf="pieceInfo.file === space.file && pieceInfo.rank === space.rank" [info]="pieceInfo"></app-piece>
       </div>
-      <div class="playable" *ngIf="isPlayable(space.file, space.rank)" [ngClass]="{ 'isTakeable' : space.isTakeable}"></div>
+      <!-- <div class="promotion" *ngIf="togglePromotion && space.file === promotionSpace.file && space.rank === promotionSpace.rank"> -->
+      <div class="promotion" *ngIf="space.file === 'a' && space.rank === 8">
+        <div class="promotion-container" *ngFor="let promotionInfo of promotionPieces">
+          <app-piece class="promotion-piece" [info]="promotionInfo"></app-piece>
+        </div>
+      </div>
+      <div class="playable" *ngIf="isPlayable(space.file, space.rank)" [ngClass]="{ 'isTakeable' : space.isTakeable }"></div>
     </div>
   </div>
   <div class="footer">

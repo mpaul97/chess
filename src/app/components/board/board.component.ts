@@ -60,12 +60,21 @@ export class BoardComponent implements OnInit {
   whiteInMate: boolean = false;
   blackInMate: boolean = false;
 
+  // promotion
+  togglePromotion: boolean = false;
+  promotionSpace: Space = new Space();
+  promotionColor: string = '';
+  promotionPieces: Info[] = [];
+
   constructor() {}
 
   ngOnInit(): void {
     this.initBlackPieces();
     this.initWhitePieces();
     this.initAllSpaces();
+    for (let name of ['rook', 'bishop', 'knight', 'queen']) {
+      this.promotionPieces.push(new Info('white', name))
+    }
   }
 
   // main logic
@@ -103,6 +112,7 @@ export class BoardComponent implements OnInit {
       // old index
       let pieceSpaceIndex = this.allSpaces.findIndex(x => x.rank === this.selectedPiece.rank && x.file === this.selectedPiece.file);
       if (index || index === 0) { // clicked space is playable
+        this.checkPromotion(this.pieces[index], file, rank);
         this.pieces[index].rank = rank;
         this.pieces[index].file = file;
         this.pieces[index].hasMoved = true;
@@ -118,9 +128,9 @@ export class BoardComponent implements OnInit {
         this.lastMovedPiece = this.selectedPiece;
         this.whiteInCheck = false;
         this.blackInCheck = false;
+        this.pieces.map((x) => { x.isProtected = false; x.isPinned = false; x.pinnedDir = new Direction() });
         this.savePlayableSpaces();
         this.findAllChecks();
-        this.pieces.map((x) => { x.isProtected = false; x.isPinned = false; x.pinnedDir = new Direction() });
       };
     };
   }
@@ -282,6 +292,27 @@ export class BoardComponent implements OnInit {
     }
     return spaces;
   };
+
+  checkPromotion(piece: Info, file: string, rank: number) {
+    let promotionPieceNames = ['rook', 'knight', 'bishop', 'queen'];
+    if (piece.isPawn()) {
+      if (piece.isWhite() && rank === 8) {
+        this.togglePromotion = !this.togglePromotion;
+        this.promotionSpace = new Space(file, rank);
+        this.promotionColor = 'white';
+        for (let name of promotionPieceNames) {
+          this.promotionPieces.push(new Info(this.promotionColor, name));
+        }
+      } else if (!piece.isWhite() && rank === 1) {
+        this.togglePromotion = !this.togglePromotion;
+        this.promotionSpace = new Space(file, rank);
+        this.promotionColor = 'black';
+        for (let name of promotionPieceNames) {
+          this.promotionPieces.push(new Info(this.promotionColor, name));
+        }
+      }
+    }
+  }
 
   // pins
   checkKingBehind(space: Space) {
@@ -483,8 +514,7 @@ export class BoardComponent implements OnInit {
     if (this.selectedPiece.isPinned) {
       let inverseDirection = this.getInverseDirection(this.selectedPiece.pinnedDir.abbr)?.abbr;
       if (direction !== inverseDirection) {
-        console.log(this.selectedPiece, targetFile, targetRank)
-        isValid = false;
+        return [false, new Space(targetFile, targetRank), false];
       }
     };
     let allSpacesIndex = this.allSpaces.findIndex(x => x.rank === targetRank && x.file === targetFile);

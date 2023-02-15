@@ -102,3 +102,31 @@
   color: red;
   font-style: italic;
 }
+
+.promotion {
+  display: inline-flex;
+  position: absolute;
+  margin-top: 2px;
+  margin-left: 70px;
+}
+
+.promotion-container {
+  background-color: var(--dark);
+  display: flex;
+  width: 68px;
+  height: 68px;
+  justify-content: center;
+  align-items: center;
+  border: 2px solid white;
+  border-left: none;
+  margin-top: -70px;
+}
+
+.promotion-piece {
+  margin-top: 10px;
+}
+
+.promotion-container:hover {
+  cursor: pointer;
+  filter: brightness(70%);
+}
