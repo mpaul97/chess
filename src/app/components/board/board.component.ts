@@ -72,9 +72,6 @@ export class BoardComponent implements OnInit {
     this.initBlackPieces();
     this.initWhitePieces();
     this.initAllSpaces();
-    for (let name of ['rook', 'bishop', 'knight', 'queen']) {
-      this.promotionPieces.push(new Info('white', name))
-    }
   }
 
   // main logic
@@ -85,11 +82,12 @@ export class BoardComponent implements OnInit {
     } else if (this.blackInMate) {
       console.log("Black is Mated!!!");
       return;
-    }
+    };
     let piece = this.getPiece(file, rank);
     // new index
     let clickedSpaceIndex = this.allSpaces.findIndex(x => x.rank === rank && x.file === file);
     if (piece) {
+      if (this.togglePromotion) this.togglePromotion = false;
       if (this.isWhiteMove && piece.color === 'white') {
         this.selectedPiece = piece;
         this.allSpaces.map(x => x.containsSelectedPiece = false);
@@ -111,7 +109,7 @@ export class BoardComponent implements OnInit {
       let index = this.pieces.findIndex(x => x.rank === this.selectedPiece.rank && x.file === this.selectedPiece.file);
       // old index
       let pieceSpaceIndex = this.allSpaces.findIndex(x => x.rank === this.selectedPiece.rank && x.file === this.selectedPiece.file);
-      if (index || index === 0) { // clicked space is playable
+      if ((index || index === 0)) { // clicked space is playable
         this.checkPromotion(this.pieces[index], file, rank);
         this.pieces[index].rank = rank;
         this.pieces[index].file = file;
@@ -133,6 +131,15 @@ export class BoardComponent implements OnInit {
         this.findAllChecks();
       };
     };
+  }
+
+  promotionClicked(piece: Info, file: string, rank: number) {
+    let oldPieceIndex = this.pieces.findIndex(x => x.file === file && x.rank === rank);
+    let oldPiece = this.pieces[oldPieceIndex];
+    this.pieces[oldPieceIndex] = new Info(piece.color, piece.type, file, rank, oldPiece.hasMoved, oldPiece.isProtected, oldPiece.isPinned, oldPiece.pinnedDir);
+    this.promotionSpace = new Space();
+    this.promotionColor = '';
+    this.promotionPieces = [];
   }
 
   findMoves(piece: Info) {
@@ -256,7 +263,8 @@ export class BoardComponent implements OnInit {
         this.blackInCheck = true;
         if (king) {
           this.blockingMoves = this.getBlockingMoves(king);
-          let isCheckingPieceTakeable = !this.blackTakeableSpaces.find(x => x.rank === this.selectedPiece.rank && x.file === this.selectedPiece.file);
+          this.kingPlayableSpaces = this.playableSpaces;
+          let isCheckingPieceTakeable = this.blackTakeableSpaces.find(x => x.rank === this.lastMovedPiece.rank && x.file === this.lastMovedPiece.file);
           if (!isCheckingPieceTakeable && this.playableSpaces.length === 0 && this.blockingMoves.length === 0) {
             this.blackInMate = true;
             this.blackInCheck = false;
@@ -278,7 +286,7 @@ export class BoardComponent implements OnInit {
       let kingFileIndex = this.getFileIndex(kingPosition[0] as string);
       let kingRankIndex = this.ranks.findIndex(x => x === kingPosition[1]);
       for (let i = 1; i <= 8; i++) {
-        if (!kingRankIndex) break;
+        if (kingRankIndex === undefined) break;
         let targetFile = this.files[kingFileIndex + inverseDirection[0]*i];
         if (!targetFile) break;
         let targetRank = this.ranks[kingRankIndex] + inverseDirection[1]*i;
@@ -574,6 +582,15 @@ export class BoardComponent implements OnInit {
           }
         }
       }
+    };
+    // castling
+    let isRightCastleValid = false;
+    let rightCastleSpaces = [1, 2, 3];
+    for (let vertical of rightCastleSpaces) {
+      let targetFile = this.files[this.getFileIndex(file) + vertical];
+      let targetRank = rank;
+      let piece = this.getPiece(targetFile, targetRank);
+      
     }
     return spaces;
   }
