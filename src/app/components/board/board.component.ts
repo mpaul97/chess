@@ -106,10 +106,21 @@ export class BoardComponent implements OnInit {
         this.pieces = this.pieces.filter(x => x !== takeablePiece);
         this.takenPieces.push(takeablePiece as Info);
       };
+      // EN PASSANT
+      if (this.allSpaces[clickedSpaceIndex].enPassant) {
+        let multiplier = this.selectedPiece.isWhite() ? -1 : 1;
+        let pawn = this.pieces.find(x => x.file === file && x.rank === rank+multiplier);
+        if (pawn && pawn.color !== this.selectedPiece.color) {
+          this.pieces = this.pieces.filter(x => x !== pawn);
+          this.takenPieces.push(pawn as Info);
+          this.allSpaces.map(x => x.enPassant = false);
+        }
+      }
       let index = this.pieces.findIndex(x => x.rank === this.selectedPiece.rank && x.file === this.selectedPiece.file);
       // old index
       let pieceSpaceIndex = this.allSpaces.findIndex(x => x.rank === this.selectedPiece.rank && x.file === this.selectedPiece.file);
-      if ((index || index === 0)) { // clicked space is playable
+      if (index || index === 0) { // clicked space is playable
+        this.performCastling(isSpacePlayable, file, rank);
         this.checkPromotion(this.pieces[index], file, rank);
         this.pieces[index].rank = rank;
         this.pieces[index].file = file;
@@ -226,6 +237,7 @@ export class BoardComponent implements OnInit {
           }
         if (!space.hasPiece) {
           if (piece.isWhite()) {
+            if (this.allWhitePlayableSpaces.length !== 0) console.log(this.allWhitePlayableSpaces)
             this.allWhitePlayableSpaces.push(space);
           } else {
             this.allBlackPlayableSpaces.push(space);
@@ -358,6 +370,10 @@ export class BoardComponent implements OnInit {
         };
         if (!firstSpace?.hasPiece && !secondSpace?.hasPiece) {
           spaces.push(new Space(piece.file, piece.rank + 2*multiplier));
+          if (!this.isSaving) {
+            let allSpacesPassantIndex = this.allSpaces.findIndex(x => x.file === piece.file && x.rank === piece.rank + 1*multiplier);
+            this.allSpaces[allSpacesPassantIndex].enPassant = true;
+          }
         };
       } else {
         if (!firstSpace?.hasPiece) {
@@ -567,6 +583,7 @@ export class BoardComponent implements OnInit {
           let targetPiece = this.getPiece(targetFile, targetRank);
           if (!this.allSpaces[allSpacesIndex].hasPiece) {
             let playableSpaces = this.selectedPiece.isWhite() ? this.allBlackPlayableSpaces : this.allWhitePlayableSpaces;
+            this.selectedPiece.isWhite() ? playableSpaces.push(...this.pawnBlackTakeableSpaces) : playableSpaces.push(...this.pawnWhiteTakeableSpaces);
             if (!this.isSaving && !playableSpaces.find(x => x.file === targetFile && x.rank === targetRank)) {
               spaces.push(new Space(targetFile, targetRank, false, false, 0, 0, '', true));
             } else if (this.isSaving) {
@@ -584,18 +601,91 @@ export class BoardComponent implements OnInit {
       }
     };
     // castling
-    let isRightCastleValid = false;
-    let rightCastleSpaces = [1, 2, 3];
-    for (let vertical of rightCastleSpaces) {
-      let targetFile = this.files[this.getFileIndex(file) + vertical];
-      let targetRank = rank;
-      let piece = this.getPiece(targetFile, targetRank);
-      
+    let [rCastleValid, lCastleValid] = this.checkCastling(file, rank);
+    if (!this.selectedPiece.hasMoved) {
+      if (rCastleValid) {
+        let targetFile = this.files[this.getFileIndex(file) + 2];
+        let targetRank = rank;
+        if (!this.getSpace(targetFile, targetRank)?.isTakeable) {
+          spaces.push(new Space(targetFile, targetRank, false, false, 0, 0, '', true, false, true));
+        }
+      };
+      if (lCastleValid) {
+        let targetFile = this.files[this.getFileIndex(file) - 2];
+        let targetRank = rank;
+        if (!this.getSpace(targetFile, targetRank)?.isTakeable) {
+          spaces.push(new Space(targetFile, targetRank, false, false, 0, 0, '', true, false, true));
+        }
+      }
     }
     return spaces;
+  };
+
+  checkCastling(file: string, rank: number) {
+    let rCastle = false;
+    let lCastle = false;
+    let rightPieces = [];
+    let leftPieces = [];
+    for (let vertical of [1, 2, 3, 4]) {
+      let targetFileR = this.files[this.getFileIndex(file) + vertical];
+      let targetRankR = rank;
+      let pieceR = this.getPiece(targetFileR, targetRankR);
+      if (pieceR) rightPieces.push(pieceR);
+      let targetFileL = this.files[this.getFileIndex(file) + vertical*-1];
+      let targetRankL = rank;
+      let pieceL = this.getPiece(targetFileL, targetRankL);
+      if (pieceL) leftPieces.push(pieceL);
+    };
+    // check right pieces
+    if (rightPieces.length === 1) {
+      if (rightPieces[0].isRook() && !rightPieces[0].hasMoved) {
+        rCastle = true;
+      }
+    };
+    // check left pieces
+    if (leftPieces.length === 1) {
+      if (leftPieces[0].isRook() && !leftPieces[0].hasMoved) {
+        lCastle = true;
+      }
+    };
+    return [rCastle, lCastle];
+  };
+
+  performCastling(isSpacePlayable: Space, file: string , rank: number) {
+    if (isSpacePlayable.isCastle) {
+      let currFile = this.selectedPiece.file;
+      let pastIndex = this.getFileIndex(file);
+      let currIndex = this.getFileIndex(currFile);
+      let rookPiecesIndex = undefined;
+      let newRookSpace = undefined;
+      if (pastIndex > currIndex) { // right castle
+        let currRookSpace = [this.files[pastIndex+1], rank];
+        newRookSpace = [this.files[pastIndex-1], rank];
+        rookPiecesIndex = this.pieces.findIndex(x => x.file === currRookSpace[0] && x.rank === currRookSpace[1]);
+      };
+      if (pastIndex < currIndex) { // left castle
+        let currRookSpace = [this.files[pastIndex-2], rank];
+        newRookSpace = [this.files[pastIndex+1], rank];
+        rookPiecesIndex = this.pieces.findIndex(x => x.file === currRookSpace[0] && x.rank === currRookSpace[1]);
+      };
+      if (newRookSpace && rookPiecesIndex) {
+        let oldFile = this.pieces[rookPiecesIndex].file;
+        let newFile = newRookSpace[0] as string;
+        let allSpacesOldIndex = this.allSpaces.findIndex(x => x.file === oldFile && x.rank === rank);
+        let allSpacesNewIndex = this.allSpaces.findIndex(x => x.file === newFile && x.rank === rank);
+        this.pieces[rookPiecesIndex].file = newFile;
+        this.pieces[rookPiecesIndex].hasMoved = true;
+        this.allSpaces[allSpacesOldIndex].hasPiece = false;
+        this.allSpaces[allSpacesNewIndex].hasPiece = true;
+      }
+    };
   }
 
   // helpers
+  getSpace(file: string, rank: number) : Space | undefined {
+    return this.allSpaces.find(x => x.file === file && x.rank === rank);
+  }
+
   getFileIndex(file: string) {
     return this.files.indexOf(file);
   }

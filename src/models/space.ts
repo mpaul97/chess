@@ -10,6 +10,8 @@ export class Space {
     public y: number = 0,
     public directionAbbr: string = '',
     public isKingSpace: boolean = false,
-    public containsSelectedPiece = false
+    public containsSelectedPiece = false,
+    public isCastle: boolean = false,
+    public enPassant: boolean = false
   ) {}
 }
