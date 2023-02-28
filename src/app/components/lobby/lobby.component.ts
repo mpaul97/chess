@@ -37,12 +37,34 @@ export class LobbyComponent implements OnInit {
 
       if(res.playerOne.username === this.username) {
         this.userInfo = res.playerOne
-        this.gameInfo = {room: res.room, turn: res.turn}
+        this.gameInfo = {
+          room: res.room, 
+          turn: res.turn,
+          players: {
+            playerOne: {
+              username: res.playerOne.username
+            },
+            playerTwo: { 
+              username: res.playerTwo.username
+            }
+          }
+        }
         console.log(`You are playing as ${this.userInfo.color}`)
       }
       else {
         this.userInfo = res.playerTwo
-        this.gameInfo = {room: res.room, turn: res.turn}
+        this.gameInfo = {
+          room: res.room,
+          turn: res.turn,           
+          players: {
+            playerOne: {
+              username: res.playerOne.username
+            },
+            playerTwo: { 
+              username: res.playerTwo.username
+            }
+          }
+        }
         console.log(`You are playing as ${this.userInfo.color}`)
       }
     })

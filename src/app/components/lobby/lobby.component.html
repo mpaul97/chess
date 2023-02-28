@@ -40,6 +40,8 @@
         </p-table>
     </div>
 </div>
+
+<!-- TODO: Move displayBoard into chess-service so you can naviagte between global chat and game-->
 <div class="chess-board" *ngIf="displayBoard">
     <app-board [userInfo]="this.userInfo" [gameInfo]="this.gameInfo"></app-board>
 </div>
@@ -49,7 +51,7 @@
 >
     <div style="display: inline-flex; margin-top: 20px;">
         <span class="p-float-label">
-            <input id="input" type="text" pInputText [(ngModel)]="username"> 
+            <input id="input" type="text" pInputText [(ngModel)]="username" (keyup.enter)="onNewRoom()"> 
             <label for="input">Username</label>
         </span>
         <button type="button" pButton label="Create"
@@ -64,7 +66,7 @@
 >
     <div style="display: inline-flex; margin-top: 20px;">
         <span class="p-float-label">
-            <input id="input" type="text" pInputText [(ngModel)]="username"> 
+            <input id="input" type="text" pInputText [(ngModel)]="username" (keyup.enter)="joinRoom(this.selectedRoom)"> 
             <label for="input">Username</label>
         </span>
         <button type="button" pButton label="Join"

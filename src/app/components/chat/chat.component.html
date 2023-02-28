@@ -1,13 +1,13 @@
-<div class="chat">
+<div class="chat" [ngStyle]="{'height': (this.room) ? '100%' : 'calc(100% - 61px)'}">
     <div class="message-interface">
         <div class="message-container">
             <div *ngFor="let message of messages; let i = index" class="message"
                  [ngStyle]="{'background-color': (i % 2 === 1) ? 'var(--gray-700)' : 'var(--gray-800)'}"
             >
-                <p style="display: block; overflow-wrap: break-word; max-width: 80%;">{{message.message}}</p>
-                <div class="message-metadata">
+                <p style="display: block; overflow-wrap: break-word; max-width: 80%; padding-right: 25px;">{{message.message}}</p>
+                <div class="message-metadata" style="max-width: 20%; text-align: right;">
                     <b>{{message.username}}</b>
-                    <p>{{message.timestamp}}</p>
+                    <p [hidden]="this.room">{{message.timestamp}}</p>
                 </div>
             </div>
         </div>

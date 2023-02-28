@@ -6,7 +6,7 @@ import { Socket } from 'ngx-socket-io';
 })
 export class ChatService {
 
-  recieveMessage: EventEmitter<string> = new EventEmitter()
+  recieveMessage: EventEmitter<any> = new EventEmitter()
   recieveMessages: EventEmitter<any[]> = new EventEmitter()
 
   constructor(private socket: Socket) {
@@ -18,7 +18,16 @@ export class ChatService {
     })
   }
 
-  sendMessage(message: string, username: string) {
+  sendMessage(message: string, username: string, room: string | null) {
+    if(room) {
+      this.socket.emit('sendMessageToRoom', {
+        room: room,
+        message: message,
+        username: username,
+        timestamp: new Date(Date.now()).toLocaleTimeString()
+      })
+      return
+    }
     this.socket.emit('sendMessage', {
       message: message,
       username: username,

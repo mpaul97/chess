@@ -44,10 +44,11 @@ io.on('connection', (socket) => {
         return callback({message: `User: ${username} is joining room: ${key}`, roomObject: [room]})
     })
     socket.on('joinRoom', (data, callback) => {
-        console.log(io.of('/').adapter.rooms.get(data.room))
-        console.log(io.of('/').adapter.rooms.get(data.room).size)
         if(io.of('/').adapter.rooms.get(data.room).size === 2) {
             return callback({status: 'ERROR', message: `Room ${data.room} is full!`}) 
+        }
+        else if(roomsList.get(data.room).playerOne.username === data.username) {
+            return callback({status: 'ERROR', message: `Username ${data.username} is already in room`})  
         }
         socket.join(data.room)
         console.log(`${data.username} is joining room: ${data.room}`)
@@ -79,7 +80,7 @@ io.on('connection', (socket) => {
 
         return callback({status: 'OK', message: `User ${data.username} is joining room ${data.room}`})
     })
-    socket.on('makeMove', (data, callback) => {
+    socket.on('makeMove', (data) => {
         if(!roomsList.has(data.room)) {
             return
         }
@@ -92,6 +93,7 @@ io.on('connection', (socket) => {
             roomData.turn = roomData.playerOne.username
         }
         roomsList.set(data.room, roomData)
+
         io.to(data.room).emit('madeMove', {
             username: data.username, 
             index: data.index, 
@@ -102,7 +104,7 @@ io.on('connection', (socket) => {
             didTake: data.didTake
         })
     })
-    socket.on('takePiece', (data, room, username, callback) => {
+    socket.on('takePiece', (data, room, username) => {
         allData = {takeablePiece: data, username: username}
         io.to(room).emit('pieceTaken', allData)
     })
@@ -127,6 +129,9 @@ io.on('connection', (socket) => {
         }
 
         io.emit('recieveMessage', message)
+    })
+    socket.on('sendMessageToRoom', (message) => {
+        io.to(message.room).emit('recieveMessage', message)
     })
     socket.on('getMessages', () => {
         socket.emit('recieveMessages', messageCache)

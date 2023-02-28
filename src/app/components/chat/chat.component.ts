@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { ChatService } from 'src/app/services/chat.service';
 
 @Component({
@@ -10,11 +10,18 @@ export class ChatComponent implements OnInit {
 
   inputMessage: string = ""
   messages: any[] = []
-  username: string = ""
   displayDialog: boolean = false
+
+  @Input() room: string | null = null
+  @Input() username: string = ""
+  @Input() shouldDisplayTimestamps: boolean = true
 
   constructor(private cs: ChatService) { 
     this.cs.recieveMessage.subscribe((message) => {
+      if(this.room && !message.room) {
+        return
+      }
+
       this.messages.push(message)
     })
     this.cs.recieveMessages.subscribe((messages) => {
@@ -23,6 +30,7 @@ export class ChatComponent implements OnInit {
   }
 
   ngOnInit(): void { 
+    if(this.room) { return }
     this.displayDialog = true
     this.cs.getMessages()
   }
@@ -32,7 +40,7 @@ export class ChatComponent implements OnInit {
   }
 
   sendMessage() {
-    this.cs.sendMessage(this.inputMessage, this.username)
+    this.cs.sendMessage(this.inputMessage, this.username, this.room)
     this.inputMessage = ""
   }
 }

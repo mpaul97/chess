@@ -26,17 +26,40 @@ export class BoardComponent implements OnInit {
   whiteTakeableSpaces: Space[] = [];
   blackTakeableSpaces: Space[] = [];
 
+  allWhitePlayableSpaces: Space[] = [];
+  allBlackPlayableSpaces: Space[] = [];
+
+  isSaving: boolean = false;
+
   takenPieces: Info[] = [];
   whiteInCheck: boolean = false;
   blackInCheck: boolean = false;
 
+  // in check, no blocking or taking moves, no king moves
   whiteInMate: boolean = false;
   blackInMate: boolean = false;
 
   @Input() userInfo: any = {}
   @Input() gameInfo: any = {}
-
+  moves: any[] = new Array()
+  messages: any[] = new Array()
+  inputMessage: string = ""
+  isChat: boolean = false
+  gameInfoControls: any = [
+    {name: "Moves", value: false},
+    {name: "Chat", value: true}
+  ]
+  // TODO: EMOTES!!!!
   constructor(private cs: ChessService) {
+
+    // for(let i = 0; i < 100; i++) {
+    //   this.moves.push({
+    //     username: 'username',
+    //     letter: 'A',
+    //     file: 2,
+    //     rank: 2
+    //   })
+    // }
     this.cs.madeMove.subscribe((data) => {
       this.gameInfo.turn = data.nextTurn
 
@@ -69,6 +92,13 @@ export class BoardComponent implements OnInit {
       else {
         letter = this.pieces[data.index].type[0].toUpperCase()
       }
+      this.moves.push({
+        username: data.username,
+        letter: letter,
+        file: data.file,
+        rank: data.rank,
+        didTake: data.didTake
+      })
       console.log(`Move recieved: ${data.username} moves ${letter}${data.file}${data.rank}`)
     })
     this.cs.pieceTaken.subscribe((data: any) => {
@@ -109,11 +139,15 @@ export class BoardComponent implements OnInit {
     if(!this.isYourTurn) return 
     let didTake: boolean = false
 
-    if (this.whiteInMate || this.blackInMate) {
-      console.log('Checkmate!')
+    if (this.whiteInMate) {
+      console.log("White is Mated!!!");
       return;
-    } 
+    } else if (this.blackInMate) {
+      console.log("Black is Mated!!!");
+      return;
+    }
     let piece = this.getPiece(file, rank);
+    // new index
     let clickedSpaceIndex = this.allSpaces.findIndex(x => x.rank === rank && x.file === file);
 
     if (piece && !this.allSpaces[clickedSpaceIndex].isTakeable) {
@@ -135,6 +169,7 @@ export class BoardComponent implements OnInit {
         this.cs.takePiece(takeablePiece as Info, this.gameInfo.room, this.userInfo.username)
       };
       let index = this.pieces.findIndex(x => x.rank === this.selectedPiece.rank && x.file === this.selectedPiece.file);
+      // old index
       let pieceSpaceIndex = this.allSpaces.findIndex(x => x.rank === this.selectedPiece.rank && x.file === this.selectedPiece.file);
       if (index || index === 0) { // clicked space is playable
         this.pieces[index].rank = rank;
@@ -144,11 +179,13 @@ export class BoardComponent implements OnInit {
         this.playableSpaces = [];
         this.whiteTakeableSpaces = [];
         this.blackTakeableSpaces = [];
-        this.saveTakeableSpaces();
-        this.findAllChecks();
+        this.allWhitePlayableSpaces = [];
+        this.allBlackPlayableSpaces = [];
         this.allSpaces[pieceSpaceIndex].hasPiece = false; // old space
         this.allSpaces[clickedSpaceIndex].hasPiece = true; // new space
         this.allSpaces.map(x => x.isTakeable = false);
+        this.savePlayableSpaces();
+        this.findAllChecks();
       };
     };
   }
@@ -173,21 +210,46 @@ export class BoardComponent implements OnInit {
     };
   }
 
-  saveTakeableSpaces() {
+  savePlayableSpaces() {
+    this.isSaving = true;
     for (let piece of this.pieces) {
+      this.selectedPiece = piece;
       this.getPlayableSpaces(piece);
+      if (piece.isPawn()) {
+        let multiplier: number = piece.isWhite() ? 1 : -1;
+        let firstTakeableSpace = this.allSpaces.find(x => x.file === this.files[this.getFileIndex(piece.file)-1] && x.rank === piece.rank + 1*multiplier);
+        let secondTakeableSpace = this.allSpaces.find(x => x.file === this.files[this.getFileIndex(piece.file)+1] && x.rank === piece.rank + 1*multiplier);
+        if (piece.isWhite()) {
+          if (firstTakeableSpace) this.allWhitePlayableSpaces.push(firstTakeableSpace);
+          if (secondTakeableSpace) this.allWhitePlayableSpaces.push(secondTakeableSpace);
+        } else {
+          if (firstTakeableSpace) this.allBlackPlayableSpaces.push(firstTakeableSpace);
+          if (secondTakeableSpace) this.allBlackPlayableSpaces.push(secondTakeableSpace);
+        }
+      }
       for (let space of this.playableSpaces) {
         let targetPiece = this.getPiece(space.file, space.rank);
-        if (space.isTakeable && targetPiece && targetPiece.color !== piece.color) {
-            if (piece.color === 'white') {
+        if (space.hasPiece && targetPiece && targetPiece.color !== piece.color) {
+            if (piece.isWhite()) {
               this.whiteTakeableSpaces.push(space);
             } else {
               this.blackTakeableSpaces.push(space);
             }
+          }
+        if (!space.hasPiece) {
+          if (!piece.isPawn()) {
+            if (piece.isWhite()) {
+              this.allWhitePlayableSpaces.push(space);
+            } else {
+              this.allBlackPlayableSpaces.push(space);
+            }
+          }
         }
       }
     };
     this.playableSpaces = [];
+    this.isSaving = false;
+    this.selectedPiece = new Info();
   }
 
   findAllChecks() {
@@ -198,30 +260,32 @@ export class BoardComponent implements OnInit {
   getCheck(color: string, takeableSpaces: Space[]) {
     // white in check
     let king = this.pieces.find(x => x.color === color && x.isKing());
+    if (king) this.getPlayableSpaces(king);
     let inTakeable = takeableSpaces.findIndex(x => x.file === king?.file && x.rank === king?.rank);
     if (inTakeable !== -1) {
       if (color === 'white') {
         this.whiteInCheck = true;
         let isCheckingPieceTakeable = !this.whiteTakeableSpaces.find(x => x.rank === this.selectedPiece.rank && x.file === this.selectedPiece.file);
-        if (isCheckingPieceTakeable) {
+        if (isCheckingPieceTakeable && this.playableSpaces.length === 0) {
           this.whiteInMate = true;
           this.whiteInCheck = false;
         }
       } else {
         this.blackInCheck = true;
         let isCheckingPieceTakeable = !this.blackTakeableSpaces.find(x => x.rank === this.selectedPiece.rank && x.file === this.selectedPiece.file)
-        if (isCheckingPieceTakeable) {
+        if (isCheckingPieceTakeable && this.playableSpaces.length === 0) {
           this.blackInMate = true;
           this.blackInCheck = false;
         }
       }
     };
+    this.playableSpaces = [];
   };
 
   // piece moves
   getPawnMoves(piece: Info) : Space[] {
     let spaces: Space[] = [];
-    let multiplier: number = piece.color === 'white' ? 1 : -1;
+    let multiplier: number = piece.isWhite() ? 1 : -1;
     let firstSpace = this.allSpaces.find(x => x.file === piece.file && x.rank === piece.rank + 1*multiplier);
     let secondSpace = this.allSpaces.find(x => x.file === piece.file && x.rank === piece.rank + 2*multiplier);
     if (!piece.hasMoved) {
@@ -416,16 +480,18 @@ export class BoardComponent implements OnInit {
       let targetFile = this.files[this.getFileIndex(file) + vertical];
       let targetRank = rank + horizontal;
       let allSpacesIndex = this.allSpaces.findIndex(x => x.rank === targetRank && x.file === targetFile);
-      if (targetFile && targetRank && this.allSpaces[allSpacesIndex]) {
-        let targetPiece = this.getPiece(targetFile, targetRank);
-        if (!this.allSpaces[allSpacesIndex].hasPiece) {
-          if (this.selectedPiece.color !== targetPiece?.color) {
+      let inWhitePlayable = this.allWhitePlayableSpaces.findIndex(x => x.rank === targetRank && x.file === targetFile);
+      let inBlackPlayable = this.allBlackPlayableSpaces.findIndex(x => x.rank === targetRank && x.file === targetFile);
+      if ((this.selectedPiece.isWhite() && inBlackPlayable === -1) || (!this.selectedPiece.isWhite() && inWhitePlayable === -1) || this.isSaving) {
+        if (targetFile && targetRank && this.allSpaces[allSpacesIndex]) {
+          let targetPiece = this.getPiece(targetFile, targetRank);
+          if (!this.allSpaces[allSpacesIndex].hasPiece) {
             spaces.push(new Space(targetFile, targetRank));
-          }
-        } else {
-          if (this.selectedPiece.color !== targetPiece?.color) {
-            this.allSpaces[allSpacesIndex].isTakeable = true;
-            spaces.push(new Space(targetFile, targetRank, true, true));
+          } else {
+            if (this.selectedPiece.color !== targetPiece?.color && !targetPiece?.isProtected) {
+              this.allSpaces[allSpacesIndex].isTakeable = true;
+              spaces.push(new Space(targetFile, targetRank, true, true));
+            }
           }
         }
       }
@@ -518,4 +584,7 @@ export class BoardComponent implements OnInit {
     })
   }
 
+  sendMessage() {
+    
+  }
 }

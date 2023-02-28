@@ -20,7 +20,11 @@ import { NavBarComponent } from './components/nav-bar/nav-bar.component';
 import { MenubarModule } from 'primeng/menubar';
 import { DividerModule } from 'primeng/divider';
 import { ChatComponent } from './components/chat/chat.component';
+import { AvatarModule } from 'primeng/avatar';
+import {TabViewModule} from 'primeng/tabview';
 import { environment } from '../environments/environment'
+import {SelectButtonModule} from 'primeng/selectbutton';
+import { ChessNotationPipe } from './util/chess-notation.pipe';
 
 const config: SocketIoConfig = { url: environment.serverUrl, options: { withCredentials: false,} };
 
@@ -32,7 +36,8 @@ const config: SocketIoConfig = { url: environment.serverUrl, options: { withCred
     LobbyComponent,
     PlayerCountPipe,
     NavBarComponent,
-    ChatComponent
+    ChatComponent,
+    ChessNotationPipe
   ],
   imports: [
     BrowserModule,
@@ -45,7 +50,10 @@ const config: SocketIoConfig = { url: environment.serverUrl, options: { withCred
     FormsModule,
     MenubarModule,
     DividerModule,
-    BrowserAnimationsModule
+    AvatarModule,
+    TabViewModule,
+    BrowserAnimationsModule,
+    SelectButtonModule
   ],
   providers: [],
   bootstrap: [AppComponent]
