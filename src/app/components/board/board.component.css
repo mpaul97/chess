@@ -84,8 +84,13 @@
 }
 
 .taken-piece {
-  display: inline-block;
+  /* display: inline-block; */
   margin-left: -20px;
+}
+
+.whiteTaken {
+  position: absolute;
+  right: 0px;
 }
 
 .footer {

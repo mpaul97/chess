@@ -1,5 +1,5 @@
  <div class="taken-container">
-  <div class="taken-piece"*ngFor="let pieceInfo of takenPieces">
+  <div class="taken-piece" [ngClass]="{ 'whiteTaken' : pieceInfo.isWhite() }" *ngFor="let pieceInfo of takenPieces">
     <app-piece [info]="pieceInfo" [isTaken]="true"></app-piece>
   </div>
 </div> 
