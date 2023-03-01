@@ -1,6 +1,5 @@
  <div class="game">
   <div class="game-container">
-
     <div class="taken-container">
       <div class="taken-piece"*ngFor="let pieceInfo of takenPieces">
         <app-piece [info]="pieceInfo" [isTaken]="true"></app-piece>
@@ -9,20 +8,24 @@
     <div class="content">
       <div class="container" [ngStyle]="{'flex-direction': this.userInfo.color === 'White' ? 'column' : 'column-reverse'}">
         <div class="space" *ngFor="let space of allSpaces" [ngClass]="{ 'dark' : (space.x + space.y) % 2 !== 0 }" (click)="spaceClicked(space.file, space.rank)">
-          <p class="space-name">{{ space.file }}{{ space.rank }}</p>
+          <p class="space-name" [ngClass]="{ selected: space.containsSelectedPiece }">{{ space.file }}{{ space.rank }}</p>
           <div class="piece-container" *ngFor="let pieceInfo of pieces">
             <app-piece *ngIf="pieceInfo.file === space.file && pieceInfo.rank === space.rank" [info]="pieceInfo"></app-piece>
           </div>
-          <!-- <div class="playable hasPiece" *ngIf="space.hasPiece"></div> -->
-          <div class="playable" *ngIf="isPlayable(space.file, space.rank)" [ngClass]="{ 'isTakeable' : space.isTakeable}"></div>
+          <div class="promotion" *ngIf="togglePromotion && space.file === promotionSpace.file && space.rank === promotionSpace.rank">
+            <div class="promotion-container" *ngFor="let promotionInfo of promotionPieces" (click)="promotionClicked(promotionInfo, space.file, space.rank)">
+              <app-piece class="promotion-piece" [info]="promotionInfo"></app-piece>
+            </div>
+          </div>
+          <div class="playable" *ngIf="isPlayable(space.file, space.rank)" [ngClass]="{ 'isTakeable' : space.isTakeable }"></div>
         </div>
       </div>
     </div>
   </div>
 
   <div class="side-container">
-
     <div class="player-information-container"> 
+
       <div class="player-information">
         <p-avatar label="{{this.gameInfo.players.playerOne.username[0].toUpperCase()}}" size="xlarge" shape="circle"></p-avatar>
         <span><b>{{this.gameInfo.players.playerOne.username}}</b></span>
@@ -30,7 +33,7 @@
       <h3>VS</h3>
       <div class="player-information">
         <p-avatar label="{{this.gameInfo.players.playerTwo.username[0].toUpperCase()}}" size="xlarge" shape="circle"></p-avatar>
-        <span><b>{{this.gameInfo.players.playerOne.username}}</b></span>
+        <span><b>{{this.gameInfo.players.playerTwo.username}}</b></span>
       </div>
     </div>
 

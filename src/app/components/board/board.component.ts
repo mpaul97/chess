@@ -1,5 +1,6 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { ChessService } from 'src/app/services/chess.service';
+import { Direction } from 'src/models/direction';
 import { Info } from 'src/models/info';
 import { Space } from 'src/models/space';
 
@@ -12,6 +13,17 @@ export class BoardComponent implements OnInit {
 
   files: string[] = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
   ranks: number[] = [8, 7, 6, 5, 4, 3, 2, 1];
+
+  directions: Direction[] = [
+    new Direction(1, 1, 'ur'),
+    new Direction(-1, 1, 'ul'),
+    new Direction(-1, -1, 'dl'),
+    new Direction(1, -1, 'dr'),
+    new Direction(0, 1, 'u'),
+    new Direction(0, -1, 'd'),
+    new Direction(-1, 0, 'l'),
+    new Direction(1, 0, 'r')
+  ];
 
   pieces: Info[] = [];
 
@@ -29,15 +41,30 @@ export class BoardComponent implements OnInit {
   allWhitePlayableSpaces: Space[] = [];
   allBlackPlayableSpaces: Space[] = [];
 
+  pawnWhiteTakeableSpaces: Space[] = [];
+  pawnBlackTakeableSpaces: Space[] = [];
+
+  lastMovedPiece: Info = new Info();
+
   isSaving: boolean = false;
 
   takenPieces: Info[] = [];
+
+  blockingMoves: Space[] = [];
+
+  kingPlayableSpaces: Space[] = [];
+
   whiteInCheck: boolean = false;
   blackInCheck: boolean = false;
 
   // in check, no blocking or taking moves, no king moves
   whiteInMate: boolean = false;
   blackInMate: boolean = false;
+  // promotion
+  togglePromotion: boolean = false;
+  promotionSpace: Space = new Space();
+  promotionColor: string = '';
+  promotionPieces: Info[] = [];
 
   @Input() userInfo: any = {}
   @Input() gameInfo: any = {}
@@ -145,21 +172,25 @@ export class BoardComponent implements OnInit {
     } else if (this.blackInMate) {
       console.log("Black is Mated!!!");
       return;
-    }
+    };
+
     let piece = this.getPiece(file, rank);
     // new index
     let clickedSpaceIndex = this.allSpaces.findIndex(x => x.rank === rank && x.file === file);
-
     if (piece && !this.allSpaces[clickedSpaceIndex].isTakeable) {
+      if (this.togglePromotion) this.togglePromotion = false;
       if(this.userInfo.color.toUpperCase() !== piece.color.toUpperCase()) {
         return
       }
       else {
         this.selectedPiece = piece
+        this.allSpaces.map(x => x.containsSelectedPiece = false);
+        this.allSpaces[clickedSpaceIndex].containsSelectedPiece = true;
       }
       this.findMoves(piece);
     };
     let isSpacePlayable = this.playableSpaces.find(space => (space.rank === rank) && (space.file === file));
+
     if (isSpacePlayable) {
       if (this.allSpaces[clickedSpaceIndex].isTakeable) {
         let takeablePiece = this.getPiece(file, rank);
@@ -168,10 +199,22 @@ export class BoardComponent implements OnInit {
         didTake = true
         this.cs.takePiece(takeablePiece as Info, this.gameInfo.room, this.userInfo.username)
       };
+      // EN PASSANT
+      if (this.allSpaces[clickedSpaceIndex].enPassant) {
+        let multiplier = this.selectedPiece.isWhite() ? -1 : 1;
+        let pawn = this.pieces.find(x => x.file === file && x.rank === rank+multiplier);
+        if (pawn && pawn.color !== this.selectedPiece.color) {
+          this.pieces = this.pieces.filter(x => x !== pawn);
+          this.takenPieces.push(pawn as Info);
+          this.allSpaces.map(x => x.enPassant = false);
+        }
+      }
       let index = this.pieces.findIndex(x => x.rank === this.selectedPiece.rank && x.file === this.selectedPiece.file);
       // old index
       let pieceSpaceIndex = this.allSpaces.findIndex(x => x.rank === this.selectedPiece.rank && x.file === this.selectedPiece.file);
       if (index || index === 0) { // clicked space is playable
+        this.performCastling(isSpacePlayable, file, rank);
+        this.checkPromotion(this.pieces[index], file, rank);
         this.pieces[index].rank = rank;
         this.pieces[index].file = file;
         this.pieces[index].hasMoved = true;
@@ -183,15 +226,64 @@ export class BoardComponent implements OnInit {
         this.allBlackPlayableSpaces = [];
         this.allSpaces[pieceSpaceIndex].hasPiece = false; // old space
         this.allSpaces[clickedSpaceIndex].hasPiece = true; // new space
-        this.allSpaces.map(x => x.isTakeable = false);
+        this.allSpaces.map((x) => {x.isTakeable = false; x.containsSelectedPiece = false});
+        this.lastMovedPiece = this.selectedPiece;
+        this.whiteInCheck = false;
+        this.blackInCheck = false;
+        this.pieces.map((x) => { x.isProtected = false; x.isPinned = false; x.pinnedDir = new Direction() });
         this.savePlayableSpaces();
         this.findAllChecks();
       };
     };
   }
 
+  promotionClicked(piece: Info, file: string, rank: number) {
+    let oldPieceIndex = this.pieces.findIndex(x => x.file === file && x.rank === rank);
+    let oldPiece = this.pieces[oldPieceIndex];
+    this.pieces[oldPieceIndex] = new Info(piece.color, piece.type, file, rank, oldPiece.hasMoved, oldPiece.isProtected, oldPiece.isPinned, oldPiece.pinnedDir);
+    this.promotionSpace = new Space();
+    this.promotionColor = '';
+    this.promotionPieces = [];
+  }
+
   findMoves(piece: Info) {
-    this.getPlayableSpaces(piece)
+    if (piece.isWhite()) {
+      this.getPlayableSpaces(piece);
+      if (this.whiteInCheck) {
+        // init with blocking moves
+        let validFiles = this.blockingMoves.map(x => x.file);
+        let validRanks = this.blockingMoves.map(x => x.rank);
+        // can take last moved piece (checking piece)
+        validFiles.push(this.lastMovedPiece.file);
+        validRanks.push(this.lastMovedPiece.rank);
+        // merge valid
+        let validPositions = Array.from({ length: validFiles.length }, (val, index) => (validFiles[index] + validRanks[index]));
+        let tempPlayableSpaces = this.playableSpaces.filter(x => validPositions.includes(x.file + x.rank));
+        if (!this.selectedPiece.isKing()) {
+          this.playableSpaces = tempPlayableSpaces;
+        }
+      }
+    } 
+    else { // black to move
+      if (!piece.isWhite()) {
+        this.getPlayableSpaces(piece);
+        
+        if (this.blackInCheck) {
+          // init with blocking moves
+          let validFiles = this.blockingMoves.map(x => x.file);
+          let validRanks = this.blockingMoves.map(x => x.rank);
+          // can take last moved piece (checking piece)
+          validFiles.push(this.lastMovedPiece.file);
+          validRanks.push(this.lastMovedPiece.rank);
+          // merge valid
+          let validPositions = Array.from({ length: validFiles.length }, (val, index) => (validFiles[index] + validRanks[index]));
+          let tempPlayableSpaces = this.playableSpaces.filter(x => validPositions.includes(x.file + x.rank));
+          if (!this.selectedPiece.isKing()) {
+            this.playableSpaces = tempPlayableSpaces;
+          }
+        }
+      }
+    }
   }
 
   getPlayableSpaces(piece: Info) {
@@ -220,11 +312,11 @@ export class BoardComponent implements OnInit {
         let firstTakeableSpace = this.allSpaces.find(x => x.file === this.files[this.getFileIndex(piece.file)-1] && x.rank === piece.rank + 1*multiplier);
         let secondTakeableSpace = this.allSpaces.find(x => x.file === this.files[this.getFileIndex(piece.file)+1] && x.rank === piece.rank + 1*multiplier);
         if (piece.isWhite()) {
-          if (firstTakeableSpace) this.allWhitePlayableSpaces.push(firstTakeableSpace);
-          if (secondTakeableSpace) this.allWhitePlayableSpaces.push(secondTakeableSpace);
+          if (firstTakeableSpace) this.pawnWhiteTakeableSpaces.push(firstTakeableSpace);
+          if (secondTakeableSpace) this.pawnWhiteTakeableSpaces.push(secondTakeableSpace);
         } else {
-          if (firstTakeableSpace) this.allBlackPlayableSpaces.push(firstTakeableSpace);
-          if (secondTakeableSpace) this.allBlackPlayableSpaces.push(secondTakeableSpace);
+          if (firstTakeableSpace) this.pawnBlackTakeableSpaces.push(firstTakeableSpace);
+          if (secondTakeableSpace) this.pawnBlackTakeableSpaces.push(secondTakeableSpace);
         }
       }
       for (let space of this.playableSpaces) {
@@ -237,12 +329,10 @@ export class BoardComponent implements OnInit {
             }
           }
         if (!space.hasPiece) {
-          if (!piece.isPawn()) {
-            if (piece.isWhite()) {
-              this.allWhitePlayableSpaces.push(space);
-            } else {
-              this.allBlackPlayableSpaces.push(space);
-            }
+          if (piece.isWhite()) {
+            this.allWhitePlayableSpaces.push(space);
+          } else {
+            this.allBlackPlayableSpaces.push(space);
           }
         }
       }
@@ -258,29 +348,106 @@ export class BoardComponent implements OnInit {
   }
 
   getCheck(color: string, takeableSpaces: Space[]) {
-    // white in check
     let king = this.pieces.find(x => x.color === color && x.isKing());
     if (king) this.getPlayableSpaces(king);
     let inTakeable = takeableSpaces.findIndex(x => x.file === king?.file && x.rank === king?.rank);
     if (inTakeable !== -1) {
       if (color === 'white') {
         this.whiteInCheck = true;
-        let isCheckingPieceTakeable = !this.whiteTakeableSpaces.find(x => x.rank === this.selectedPiece.rank && x.file === this.selectedPiece.file);
-        if (isCheckingPieceTakeable && this.playableSpaces.length === 0) {
-          this.whiteInMate = true;
-          this.whiteInCheck = false;
+        if (king) {
+          this.blockingMoves = this.getBlockingMoves(king);
+          this.kingPlayableSpaces = this.playableSpaces;
+          let isCheckingPieceTakeable = this.whiteTakeableSpaces.find(x => x.rank === this.lastMovedPiece.rank && x.file === this.lastMovedPiece.file);
+          if (!isCheckingPieceTakeable && this.playableSpaces.length === 0 && this.blockingMoves.length === 0) {
+            this.whiteInMate = true;
+            this.whiteInCheck = false;
+          }
         }
       } else {
         this.blackInCheck = true;
-        let isCheckingPieceTakeable = !this.blackTakeableSpaces.find(x => x.rank === this.selectedPiece.rank && x.file === this.selectedPiece.file)
-        if (isCheckingPieceTakeable && this.playableSpaces.length === 0) {
-          this.blackInMate = true;
-          this.blackInCheck = false;
+        if (king) {
+          this.blockingMoves = this.getBlockingMoves(king);
+          this.kingPlayableSpaces = this.playableSpaces;
+          let isCheckingPieceTakeable = this.blackTakeableSpaces.find(x => x.rank === this.lastMovedPiece.rank && x.file === this.lastMovedPiece.file);
+          if (!isCheckingPieceTakeable && this.playableSpaces.length === 0 && this.blockingMoves.length === 0) {
+            this.blackInMate = true;
+            this.blackInCheck = false;
+          }
         }
       }
     };
     this.playableSpaces = [];
   };
+
+  getBlockingMoves(king: Info) : Space[] {
+    let spaces = [];
+    let takeableSpaces = king.isWhite() ? this.blackTakeableSpaces : this.whiteTakeableSpaces;
+    let kingPosition = [king.file, king.rank];
+    let kingTakingDirectionAbbr = takeableSpaces.find(x => x.file === kingPosition[0] && x.rank === kingPosition[1])?.directionAbbr;
+    let direction = this.directions.find(x => x.abbr === kingTakingDirectionAbbr);
+    if (direction) {
+      let inverseDirection = [direction.x*-1, direction.y*-1];
+      let kingFileIndex = this.getFileIndex(kingPosition[0] as string);
+      let kingRankIndex = this.ranks.findIndex(x => x === kingPosition[1]);
+      for (let i = 1; i <= 8; i++) {
+        if (kingRankIndex === undefined) break;
+        let targetFile = this.files[kingFileIndex + inverseDirection[0]*i];
+        if (!targetFile) break;
+        let targetRank = this.ranks[kingRankIndex] + inverseDirection[1]*i;
+        if (!targetRank) break;
+        if (this.getPiece(targetFile, targetRank)) break;
+        let playableSpaces = king.isWhite() ? this.allWhitePlayableSpaces : this.allBlackPlayableSpaces;
+        let space = playableSpaces.find(x => x.file === targetFile && x.rank === targetRank);
+        let sameSpaces = playableSpaces.filter(x => x.file === targetFile && x.rank === targetRank);
+        if (space && ((space.isKingSpace && sameSpaces.length < 1) || (!space.isKingSpace))) spaces.push(space);
+      }
+    }
+    return spaces;
+  };
+
+  checkPromotion(piece: Info, file: string, rank: number) {
+    let promotionPieceNames = ['rook', 'knight', 'bishop', 'queen'];
+    if (piece.isPawn()) {
+      if (piece.isWhite() && rank === 8) {
+        this.togglePromotion = !this.togglePromotion;
+        this.promotionSpace = new Space(file, rank);
+        this.promotionColor = 'white';
+        for (let name of promotionPieceNames) {
+          this.promotionPieces.push(new Info(this.promotionColor, name));
+        }
+      } else if (!piece.isWhite() && rank === 1) {
+        this.togglePromotion = !this.togglePromotion;
+        this.promotionSpace = new Space(file, rank);
+        this.promotionColor = 'black';
+        for (let name of promotionPieceNames) {
+          this.promotionPieces.push(new Info(this.promotionColor, name));
+        }
+      }
+    }
+  }
+
+  // pins
+  checkKingBehind(space: Space) {
+    let directionAbbr = space.directionAbbr;
+    let direction = this.directions.find(x => x.abbr === directionAbbr);
+    if (direction) {
+      for (var i = 1; i <= 8; i++) {
+        let targetFile = this.files[this.getFileIndex(space.file)+direction.x*i];
+        if (!targetFile) break;
+        let targetRank = this.ranks[this.ranks.indexOf(space.rank + direction.y*i)];
+        if (!targetRank) break;
+        let targetPiece = this.getPiece(targetFile, targetRank);
+        if (targetPiece && targetPiece.isKing()){
+          let pinPiece = this.getPiece(space.file, space.rank);
+          if (pinPiece) {
+            let pieceIndex = this.pieces.indexOf(pinPiece);
+            this.pieces[pieceIndex].isPinned = true;
+            this.pieces[pieceIndex].pinnedDir = direction;
+          }
+        }
+      }
+    }
+  }
 
   // piece moves
   getPawnMoves(piece: Info) : Space[] {
@@ -288,18 +455,24 @@ export class BoardComponent implements OnInit {
     let multiplier: number = piece.isWhite() ? 1 : -1;
     let firstSpace = this.allSpaces.find(x => x.file === piece.file && x.rank === piece.rank + 1*multiplier);
     let secondSpace = this.allSpaces.find(x => x.file === piece.file && x.rank === piece.rank + 2*multiplier);
-    if (!piece.hasMoved) {
-      if (!firstSpace?.hasPiece) {
-        spaces.push(new Space(piece.file, piece.rank + 1*multiplier));
+    if (!piece.isPinned || (piece.pinnedDir.x === 0 && piece.pinnedDir.y === multiplier*-1)) {
+      if (!piece.hasMoved) {
+        if (!firstSpace?.hasPiece) {
+          spaces.push(new Space(piece.file, piece.rank + 1*multiplier));
+        };
+        if (!firstSpace?.hasPiece && !secondSpace?.hasPiece) {
+          spaces.push(new Space(piece.file, piece.rank + 2*multiplier));
+          if (!this.isSaving) {
+            let allSpacesPassantIndex = this.allSpaces.findIndex(x => x.file === piece.file && x.rank === piece.rank + 1*multiplier);
+            this.allSpaces[allSpacesPassantIndex].enPassant = true;
+          }
+        };
+      } else {
+        if (!firstSpace?.hasPiece) {
+          spaces.push(new Space(piece.file, piece.rank + 1*multiplier));
+        };
       };
-      if (!firstSpace?.hasPiece && !secondSpace?.hasPiece) {
-        spaces.push(new Space(piece.file, piece.rank + 2*multiplier));
-      };
-    } else {
-      if (!firstSpace?.hasPiece) {
-        spaces.push(new Space(piece.file, piece.rank + 1*multiplier));
-      };
-    };
+    }
     let firstTakeableSpace = this.allSpaces.find(x => x.file === this.files[this.getFileIndex(piece.file)-1] && x.rank === piece.rank + 1*multiplier);
     let secondTakeableSpace = this.allSpaces.find(x => x.file === this.files[this.getFileIndex(piece.file)+1] && x.rank === piece.rank + 1*multiplier);
     if (firstTakeableSpace) {
@@ -329,21 +502,26 @@ export class BoardComponent implements OnInit {
   getKnightMoves(file: string, rank: number) : Space[] {
     let spaces: Space[] = [];
     let validSpaces = [[1, 2], [-1, 2], [-2, 1], [2, 1], [1, -2], [-1, -2], [-2, -1], [2, -1]];
-    for (let [vertical, horizontal] of validSpaces) {
-      let targetFile = this.files[this.getFileIndex(file) + vertical];
-      let targetRank = rank + horizontal;
-      let allSpacesIndex = this.allSpaces.findIndex(x => x.rank === targetRank && x.file === targetFile);
-      if (targetFile && targetRank && this.allSpaces[allSpacesIndex]) {
-        if (!this.allSpaces[allSpacesIndex].hasPiece) {
-          let targetPiece = this.getPiece(targetFile, targetRank);
-          if (this.selectedPiece.color !== targetPiece?.color) {
-            spaces.push(new Space(targetFile, targetRank));
-          }
-        } else {
-          let targetPiece = this.getPiece(targetFile, targetRank);
-          if (this.selectedPiece.color !== targetPiece?.color) {
-            this.allSpaces[allSpacesIndex].isTakeable = true;
-            spaces.push(new Space(targetFile, targetRank, true, true));
+    if (!this.selectedPiece.isPinned) {
+      for (let [vertical, horizontal] of validSpaces) {
+        let targetFile = this.files[this.getFileIndex(file) + vertical];
+        let targetRank = rank + horizontal;
+        let allSpacesIndex = this.allSpaces.findIndex(x => x.rank === targetRank && x.file === targetFile);
+        if (targetFile && targetRank && this.allSpaces[allSpacesIndex]) {
+          if (!this.allSpaces[allSpacesIndex].hasPiece) {
+            let targetPiece = this.getPiece(targetFile, targetRank);
+            if (this.selectedPiece.color !== targetPiece?.color) {
+              spaces.push(new Space(targetFile, targetRank));
+            } else if (this.selectedPiece.color === targetPiece.color) {
+              let pieceIndex = this.pieces.findIndex(x => x === targetPiece);
+              this.pieces[pieceIndex].isProtected = true;
+            }
+          } else {
+            let targetPiece = this.getPiece(targetFile, targetRank);
+            if (this.selectedPiece.color !== targetPiece?.color) {
+              this.allSpaces[allSpacesIndex].isTakeable = true;
+              spaces.push(new Space(targetFile, targetRank, true, true));
+            }
           }
         }
       }
@@ -438,28 +616,38 @@ export class BoardComponent implements OnInit {
   }
 
   getLongMoves(file: string, rank: number, i: number, multipliers: [number, number], isValid: boolean) : [boolean, Space, boolean] {
+    let direction = this.directions.find(x => x.x === multipliers[0] && x.y === multipliers[1])?.abbr;
     let targetFile = this.files[this.getFileIndex(file) + i*multipliers[0]];
     let isTakeable = false;
     let takeableSpace = undefined;
     if (targetFile === undefined) {
       isValid = false;
-    }
+    };
     let targetRank = rank + i*multipliers[1];
     if (!this.ranks.includes(targetRank)) {
       isValid = false;
-    }
+    };
+    if (this.selectedPiece.isPinned) {
+      let inverseDirection = this.getInverseDirection(this.selectedPiece.pinnedDir.abbr)?.abbr;
+      if (direction !== inverseDirection) {
+        return [false, new Space(targetFile, targetRank), false];
+      }
+    };
     let allSpacesIndex = this.allSpaces.findIndex(x => x.rank === targetRank && x.file === targetFile);
     if (isValid && this.allSpaces[allSpacesIndex].hasPiece) {
       let targetPiece = this.getPiece(targetFile, targetRank);
       if (this.selectedPiece.color === targetPiece?.color) {
+        let pieceIndex = this.pieces.findIndex(x => x === targetPiece);
+        this.pieces[pieceIndex].isProtected = true;
         isValid = false;
       } else {
         this.allSpaces[allSpacesIndex].isTakeable = true;
-        takeableSpace = new Space(targetFile, targetRank, true, true);
+        takeableSpace = new Space(targetFile, targetRank, true, true, 0, 0, direction);
+        this.checkKingBehind(takeableSpace);
         isTakeable = true;
         isValid = false;
       }
-    }
+    };
     if (takeableSpace) {
       return [isValid, takeableSpace, isTakeable]
     }
@@ -486,20 +674,110 @@ export class BoardComponent implements OnInit {
         if (targetFile && targetRank && this.allSpaces[allSpacesIndex]) {
           let targetPiece = this.getPiece(targetFile, targetRank);
           if (!this.allSpaces[allSpacesIndex].hasPiece) {
-            spaces.push(new Space(targetFile, targetRank));
+            let playableSpaces = this.selectedPiece.isWhite() ? this.allBlackPlayableSpaces : this.allWhitePlayableSpaces;
+            this.selectedPiece.isWhite() ? playableSpaces.push(...this.pawnBlackTakeableSpaces) : playableSpaces.push(...this.pawnWhiteTakeableSpaces);
+            if (!this.isSaving && !playableSpaces.find(x => x.file === targetFile && x.rank === targetRank)) {
+              spaces.push(new Space(targetFile, targetRank, false, false, 0, 0, '', true));
+            } else if (this.isSaving) {
+              spaces.push(new Space(targetFile, targetRank, false, false, 0, 0, '', true));
+            }
           } else {
-            if (this.selectedPiece.color !== targetPiece?.color && !targetPiece?.isProtected) {
-              this.allSpaces[allSpacesIndex].isTakeable = true;
-              spaces.push(new Space(targetFile, targetRank, true, true));
+            if (this.selectedPiece.color.length > 0) {
+              if (this.selectedPiece.color !== targetPiece?.color && !targetPiece?.isProtected) {
+                this.allSpaces[allSpacesIndex].isTakeable = true;
+                spaces.push(new Space(targetFile, targetRank, true, true, 0, 0, '', true));
+              }
             }
           }
         }
       }
+    };
+    // castling
+    let [rCastleValid, lCastleValid] = this.checkCastling(file, rank);
+    if (!this.selectedPiece.hasMoved) {
+      if (rCastleValid) {
+        let targetFile = this.files[this.getFileIndex(file) + 2];
+        let targetRank = rank;
+        if (!this.getSpace(targetFile, targetRank)?.isTakeable) {
+          spaces.push(new Space(targetFile, targetRank, false, false, 0, 0, '', true, false, true));
+        }
+      };
+      if (lCastleValid) {
+        let targetFile = this.files[this.getFileIndex(file) - 2];
+        let targetRank = rank;
+        if (!this.getSpace(targetFile, targetRank)?.isTakeable) {
+          spaces.push(new Space(targetFile, targetRank, false, false, 0, 0, '', true, false, true));
+        }
+      }
     }
     return spaces;
+  };
+
+  checkCastling(file: string, rank: number) {
+    let rCastle = false;
+    let lCastle = false;
+    let rightPieces = [];
+    let leftPieces = [];
+    for (let vertical of [1, 2, 3, 4]) {
+      let targetFileR = this.files[this.getFileIndex(file) + vertical];
+      let targetRankR = rank;
+      let pieceR = this.getPiece(targetFileR, targetRankR);
+      if (pieceR) rightPieces.push(pieceR);
+      let targetFileL = this.files[this.getFileIndex(file) + vertical*-1];
+      let targetRankL = rank;
+      let pieceL = this.getPiece(targetFileL, targetRankL);
+      if (pieceL) leftPieces.push(pieceL);
+    };
+    // check right pieces
+    if (rightPieces.length === 1) {
+      if (rightPieces[0].isRook() && !rightPieces[0].hasMoved) {
+        rCastle = true;
+      }
+    };
+    // check left pieces
+    if (leftPieces.length === 1) {
+      if (leftPieces[0].isRook() && !leftPieces[0].hasMoved) {
+        lCastle = true;
+      }
+    };
+    return [rCastle, lCastle];
+  };
+
+  performCastling(isSpacePlayable: Space, file: string , rank: number) {
+    if (isSpacePlayable.isCastle) {
+      let currFile = this.selectedPiece.file;
+      let pastIndex = this.getFileIndex(file);
+      let currIndex = this.getFileIndex(currFile);
+      let rookPiecesIndex = undefined;
+      let newRookSpace = undefined;
+      if (pastIndex > currIndex) { // right castle
+        let currRookSpace = [this.files[pastIndex+1], rank];
+        newRookSpace = [this.files[pastIndex-1], rank];
+        rookPiecesIndex = this.pieces.findIndex(x => x.file === currRookSpace[0] && x.rank === currRookSpace[1]);
+      };
+      if (pastIndex < currIndex) { // left castle
+        let currRookSpace = [this.files[pastIndex-2], rank];
+        newRookSpace = [this.files[pastIndex+1], rank];
+        rookPiecesIndex = this.pieces.findIndex(x => x.file === currRookSpace[0] && x.rank === currRookSpace[1]);
+      };
+      if (newRookSpace && rookPiecesIndex) {
+        let oldFile = this.pieces[rookPiecesIndex].file;
+        let newFile = newRookSpace[0] as string;
+        let allSpacesOldIndex = this.allSpaces.findIndex(x => x.file === oldFile && x.rank === rank);
+        let allSpacesNewIndex = this.allSpaces.findIndex(x => x.file === newFile && x.rank === rank);
+        this.pieces[rookPiecesIndex].file = newFile;
+        this.pieces[rookPiecesIndex].hasMoved = true;
+        this.allSpaces[allSpacesOldIndex].hasPiece = false;
+        this.allSpaces[allSpacesNewIndex].hasPiece = true;
+      }
+    };
   }
 
   // helpers
+  getSpace(file: string, rank: number) : Space | undefined {
+    return this.allSpaces.find(x => x.file === file && x.rank === rank);
+  }
+
   getFileIndex(file: string) {
     return this.files.indexOf(file);
   }
@@ -529,6 +807,20 @@ export class BoardComponent implements OnInit {
     this.blackInCheck = false;
     this.whiteInMate = false;
     this.blackInMate = false;
+  }
+
+  getInverseDirection(abbr: string) {
+    if (abbr.includes('u')) {
+      abbr = abbr.replace('u','d');
+    } else if (abbr.includes('d')) {
+      abbr = abbr.replace('d','u');
+    };
+    if (abbr.includes('l')) {
+      abbr = abbr.replace('l','r');
+    } else if (abbr.includes('r')) {
+      abbr = abbr.replace('r','l');
+    };
+    return this.directions.find(x => x.abbr === abbr);
   }
 
   // initial functions
