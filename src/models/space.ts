@@ -12,6 +12,7 @@ export class Space {
     public isKingSpace: boolean = false,
     public containsSelectedPiece = false,
     public isCastle: boolean = false,
-    public enPassant: boolean = false
+    public enPassant: boolean = false,
+    public enPassantColor: string = ''
   ) {}
 }

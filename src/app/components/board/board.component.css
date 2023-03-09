@@ -38,7 +38,6 @@
   width: 40%;
   height: 40%;
   margin: auto;
-  margin-top: 10%;
   background-color: black;
   opacity: 0.4;
   border-radius: 100%;
@@ -48,6 +47,10 @@
   margin-top: -50px;
   background-color: rgb(255, 0, 0);
   opacity: 0.4;
+}
+
+.enPassant {
+  margin-top: 10%;
 }
 
 .hasPiece {
@@ -60,11 +63,21 @@
   width: 70px;
   font-size: 14px;
   padding: 5px;
-  color: var(--light);
-  background-color: var(--dark);
+  color: var(--dark);
+  background-color: var(--light);
   font-weight: bold;
-  border: 2px solid var(--light);
+  border: 2px solid var(--dark);
   border-radius: 5px;
+}
+
+.computer-toggle {
+  color: var(--dark);
+  background-color: var(--light);
+  padding: 10px 5px;
+  border: 2px solid var(--dark);
+  border-radius: 5px;
+  font-weight: bold;
+  margin: 0px 5px;
 }
 
 .reset:hover {

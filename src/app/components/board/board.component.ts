@@ -2,6 +2,7 @@ import { Component, Input, OnInit } from '@angular/core';
 import { Direction } from 'src/models/direction';
 import { Info } from 'src/models/info';
 import { Space } from 'src/models/space';
+import { ComputerService } from 'src/app/services/computer.service';
 
 @Component({
   selector: 'app-board',
@@ -66,7 +67,12 @@ export class BoardComponent implements OnInit {
   promotionColor: string = '';
   promotionPieces: Info[] = [];
 
-  constructor() {}
+  //computer
+  computerToggle: boolean = false;
+
+  constructor(
+    public computerService: ComputerService
+  ) {}
 
   ngOnInit(): void {
     this.initBlackPieces();
@@ -101,7 +107,8 @@ export class BoardComponent implements OnInit {
     }
     let isSpacePlayable = this.playableSpaces.find(x => x.file === file && x.rank === rank);
     if (isSpacePlayable) {
-      if (this.allSpaces[clickedSpaceIndex].isTakeable) {
+      this.started = true;
+      if (this.allSpaces[clickedSpaceIndex].isTakeable && !this.allSpaces[clickedSpaceIndex].enPassant) {
         let takeablePiece = this.getPiece(file, rank);
         this.pieces = this.pieces.filter(x => x !== takeablePiece);
         this.takenPieces.push(takeablePiece as Info);
@@ -109,17 +116,21 @@ export class BoardComponent implements OnInit {
       // EN PASSANT
       if (this.selectedPiece.isPawn() && this.allSpaces[clickedSpaceIndex].enPassant) {
         let multiplier = this.selectedPiece.isWhite() ? -1 : 1;
-        let pawn = this.pieces.find(x => x.file === file && x.rank === rank+multiplier);
+        let pawn = this.pieces.find(x => x.file === file && x.rank === rank + multiplier);
         if (pawn && pawn.color !== this.selectedPiece.color) {
           this.pieces = this.pieces.filter(x => x !== pawn);
           this.takenPieces.push(pawn as Info);
-          this.allSpaces.map(x => x.enPassant = false);
+          this.allSpaces[clickedSpaceIndex].enPassant = false;
+          this.allSpaces[clickedSpaceIndex].enPassantColor = '';
+          let allSpacesPieceIndex = this.allSpaces.findIndex(x => x.file === pawn?.file && x.rank === pawn?.rank);
+          this.allSpaces[allSpacesPieceIndex].hasPiece = false;
         }
       }
       let index = this.pieces.findIndex(x => x.rank === this.selectedPiece.rank && x.file === this.selectedPiece.file);
       // old index
       let pieceSpaceIndex = this.allSpaces.findIndex(x => x.rank === this.selectedPiece.rank && x.file === this.selectedPiece.file);
       if (index || index === 0) { // clicked space is playable
+        this.enPassantLogic(clickedSpaceIndex); // remove invalid enPassant spaces
         this.performCastling(isSpacePlayable, file, rank);
         this.checkPromotion(this.pieces[index], file, rank);
         this.pieces[index].rank = rank;
@@ -135,15 +146,27 @@ export class BoardComponent implements OnInit {
         this.isWhiteMove = !this.isWhiteMove;
         this.allSpaces[pieceSpaceIndex].hasPiece = false; // old space
         this.allSpaces[clickedSpaceIndex].hasPiece = true; // new space
-        this.allSpaces.map((x) => {x.isTakeable = false; x.containsSelectedPiece = false});
+        this.allSpaces.map((x) => { x.isTakeable = false; x.containsSelectedPiece = false });
         this.lastMovedPiece = this.selectedPiece;
         this.whiteInCheck = false;
         this.blackInCheck = false;
         this.pieces.map((x) => { x.isProtected = false; x.isPinned = false; x.pinnedDir = new Direction() });
         this.savePlayableSpaces();
         this.findAllChecks();
-      };
-    };
+        this.computerLogic();
+      }; // end clicked space is playable
+    }; // end space is playable
+  }
+
+  computerLogic() {
+    if (this.computerToggle && this.lastMovedPiece.isWhite()) {
+      let [computerFile, computerRank] = this.computerService.getComputerPieceSpace(this.pieces);
+      setTimeout(() => {
+        this.spaceClicked(computerFile, computerRank);
+        let [playableFile, playableRank] = this.computerService.getComputerPlayableSpace(this.playableSpaces);
+        console.log(playableFile)
+      }, 1000);
+    }
   }
 
   promotionClicked(piece: Info, file: string, rank: number) {
@@ -306,6 +329,7 @@ export class BoardComponent implements OnInit {
         if (!targetRank) break;
         if (this.getPiece(targetFile, targetRank)) break;
         let playableSpaces = king.isWhite() ? this.allWhitePlayableSpaces : this.allBlackPlayableSpaces;
+        console.log(playableSpaces)
         let space = playableSpaces.find(x => x.file === targetFile && x.rank === targetRank);
         let sameSpaces = playableSpaces.filter(x => x.file === targetFile && x.rank === targetRank);
         if (space && ((space.isKingSpace && sameSpaces.length < 1) || (!space.isKingSpace))) spaces.push(space);
@@ -333,6 +357,26 @@ export class BoardComponent implements OnInit {
         }
       }
     }
+  }
+
+  enPassantLogic(allSpacesIndex: number) {
+    if (this.selectedPiece.isPawn()) {
+      let spaceRank = this.allSpaces[allSpacesIndex].rank;
+      let pieceRank = this.selectedPiece.rank;
+      if (Math.abs(spaceRank - pieceRank) === 2) {
+        let multiplier = this.selectedPiece.isWhite() ? 1 : -1;
+        let passantRank = pieceRank + multiplier;
+        let passantIndex = this.allSpaces.findIndex(x => x.file === this.selectedPiece.file && x.rank === passantRank);
+        this.allSpaces[passantIndex].enPassant = true;
+        this.selectedPiece.isWhite() ? this.allSpaces[passantIndex].enPassantColor = 'white' : this.allSpaces[passantIndex].enPassantColor = 'black';
+      }
+    };
+    this.allSpaces.map((x) => {
+      if (x.enPassant && x.enPassantColor !== this.selectedPiece.color) {
+        x.enPassant = false;
+        x.enPassantColor = '';
+      }
+    })
   }
 
   // pins
@@ -372,10 +416,6 @@ export class BoardComponent implements OnInit {
         };
         if (!firstSpace?.hasPiece && !secondSpace?.hasPiece) {
           spaces.push(new Space(piece.file, piece.rank + 2*multiplier));
-          if (!this.isSaving) {
-            let allSpacesPassantIndex = this.allSpaces.findIndex(x => x.file === piece.file && x.rank === piece.rank + 1*multiplier);
-            this.allSpaces[allSpacesPassantIndex].enPassant = true;
-          }
         };
       } else {
         if (!firstSpace?.hasPiece) {
@@ -396,7 +436,7 @@ export class BoardComponent implements OnInit {
   }
 
   getPawnTakeableMoves(spaces: Space[], space: Space) {
-    if (space.hasPiece || space.enPassant) {
+    if (space.hasPiece || (space.enPassant && space.enPassantColor !== this.selectedPiece.color)) {
       let targetPiece = this.getPiece(space.file, space.rank);
       if (this.selectedPiece.color !== targetPiece?.color) {
         spaces.push(new Space(space.file, space.rank, true, true));

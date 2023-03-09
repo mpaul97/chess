@@ -15,11 +15,19 @@
           <app-piece class="promotion-piece" [info]="promotionInfo"></app-piece>
         </div>
       </div>
-      <div class="playable" *ngIf="isPlayable(space.file, space.rank)" [ngClass]="{ 'isTakeable' : space.isTakeable }"></div>
+      <div class="playable" *ngIf="isPlayable(space.file, space.rank)" [ngClass]="{ 'isTakeable' : space.isTakeable, 'enPassant' : space.enPassant }"></div>
     </div>
   </div>
   <div class="footer">
     <button class="reset" (click)="reset()">Reset</button>
+    <mat-slide-toggle 
+      class="computer-toggle" 
+      color="primary" 
+      (change)="computerToggle = !computerToggle"
+      [disabled]="started"
+    >
+      Computer
+    </mat-slide-toggle>
     <div class="notation">
       <h3 *ngIf="whiteInCheck" style="color: var(--dark);">+</h3>
       <h3 *ngIf="blackInCheck" style="color: var(--light);">+</h3>
