@@ -70,6 +70,10 @@ export class BoardComponent implements OnInit {
   //computer
   computerToggle: boolean = false;
 
+  // scores
+  whiteScore: number = 0;
+  blackScore: number = 0;
+
   constructor(
     public computerService: ComputerService
   ) {}
@@ -112,6 +116,8 @@ export class BoardComponent implements OnInit {
         let takeablePiece = this.getPiece(file, rank);
         this.pieces = this.pieces.filter(x => x !== takeablePiece);
         this.takenPieces.push(takeablePiece as Info);
+        if (takeablePiece?.isWhite()) this.blackScore += takeablePiece.getValue();
+        if (takeablePiece && !takeablePiece?.isWhite()) this.whiteScore += takeablePiece.getValue();
       };
       // EN PASSANT
       if (this.selectedPiece.isPawn() && this.allSpaces[clickedSpaceIndex].enPassant) {
@@ -124,6 +130,8 @@ export class BoardComponent implements OnInit {
           this.allSpaces[clickedSpaceIndex].enPassantColor = '';
           let allSpacesPieceIndex = this.allSpaces.findIndex(x => x.file === pawn?.file && x.rank === pawn?.rank);
           this.allSpaces[allSpacesPieceIndex].hasPiece = false;
+          if (pawn.isWhite()) this.blackScore += pawn.getValue();
+          if (!pawn.isWhite()) this.whiteScore += pawn.getValue();
         }
       }
       let index = this.pieces.findIndex(x => x.rank === this.selectedPiece.rank && x.file === this.selectedPiece.file);
@@ -160,11 +168,13 @@ export class BoardComponent implements OnInit {
 
   computerLogic() {
     if (this.computerToggle && this.lastMovedPiece.isWhite()) {
-      let [computerFile, computerRank] = this.computerService.getComputerPieceSpace(this.pieces);
-      setTimeout(() => {
+      while (this.playableSpaces.length === 0) {
+        let [computerFile, computerRank] = this.computerService.getComputerPieceSpace(this.pieces);
         this.spaceClicked(computerFile, computerRank);
+      }
+      setTimeout(() => {
         let [playableFile, playableRank] = this.computerService.getComputerPlayableSpace(this.playableSpaces);
-        console.log(playableFile)
+        this.spaceClicked(playableFile, playableRank);
       }, 1000);
     }
   }

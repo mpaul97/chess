@@ -32,4 +32,11 @@ export class Info {
   isKing() {
     return this.type === 'king' ? true : false;
   }
+  getValue() {
+    if (this.isPawn()) return 1;
+    if (this.isKnight() || this.isBishop()) return 3;
+    if (this.isRook()) return 5;
+    if (this.isQueen()) return 9;
+    return 0; 
+  }
 }

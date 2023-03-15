@@ -86,24 +86,41 @@
 }
 
 .taken-container {
-  width: 556px;
+  width: 277px;
   height: 30px;
+  display: inline-flex;
   background-color: var(--dark);
-  display: flex;
-  justify-content: center;
-  align-items: center;
   border: 2px solid var(--light);
   margin-bottom: 10px;
+  justify-content: flex-start;
+}
+
+.taken-container.white {
+  justify-content: flex-end;
+  border-left: none;
 }
 
 .taken-piece {
-  /* display: inline-block; */
-  margin-left: -20px;
+  margin-left: -18px;
 }
 
-.whiteTaken {
+.taken-piece:nth-child(1) {
+  margin-left: 0px;
+}
+
+.score {
+  color: var(--light);
   position: absolute;
-  right: 0px;
+  margin-top: 5px;
+  font-weight: bold;
+}
+
+.score.white {
+  margin-right: 240px;
+}
+
+.score.black {
+  margin-left: 240px;
 }
 
 .footer {
