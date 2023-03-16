@@ -3,6 +3,7 @@ import { Direction } from 'src/models/direction';
 import { Info } from 'src/models/info';
 import { Space } from 'src/models/space';
 import { ComputerService } from 'src/app/services/computer.service';
+import { MovesService } from 'src/app/services/moves.service';
 
 @Component({
   selector: 'app-board',
@@ -75,6 +76,7 @@ export class BoardComponent implements OnInit {
   blackScore: number = 0;
 
   constructor(
+    public movesService: MovesService,
     public computerService: ComputerService
   ) {}
 
@@ -106,8 +108,10 @@ export class BoardComponent implements OnInit {
         this.selectedPiece = piece;
         this.allSpaces.map(x => x.containsSelectedPiece = false);
         this.allSpaces[clickedSpaceIndex].containsSelectedPiece = true;
-      }
-      this.findMoves(piece);
+      };
+      this.movesService.setPieces(this.pieces);
+      this.movesService.setAllSpaces(this.allSpaces);
+      this.playableSpaces = this.movesService.findMoves(this.selectedPiece, this.lastMovedPiece, piece, this.isSaving);
     }
     let isSpacePlayable = this.playableSpaces.find(x => x.file === file && x.rank === rank);
     if (isSpacePlayable) {
