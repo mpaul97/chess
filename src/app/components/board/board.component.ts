@@ -339,7 +339,9 @@ export class BoardComponent implements OnInit {
         if (!targetRank) break;
         if (this.getPiece(targetFile, targetRank)) break;
         let playableSpaces = king.isWhite() ? this.allWhitePlayableSpaces : this.allBlackPlayableSpaces;
-        console.log(playableSpaces)
+        for (let space of playableSpaces) {
+          console.log(space)
+        }
         let space = playableSpaces.find(x => x.file === targetFile && x.rank === targetRank);
         let sameSpaces = playableSpaces.filter(x => x.file === targetFile && x.rank === targetRank);
         if (space && ((space.isKingSpace && sameSpaces.length < 1) || (!space.isKingSpace))) spaces.push(space);
@@ -433,7 +435,7 @@ export class BoardComponent implements OnInit {
         };
       };
     };
-    if (this.isSaving) spaces = [];
+    // if (this.isSaving) spaces = [];
     let firstTakeableSpace = this.allSpaces.find(x => x.file === this.files[this.getFileIndex(piece.file)-1] && x.rank === piece.rank + 1*multiplier);
     let secondTakeableSpace = this.allSpaces.find(x => x.file === this.files[this.getFileIndex(piece.file)+1] && x.rank === piece.rank + 1*multiplier);
     if (firstTakeableSpace) {

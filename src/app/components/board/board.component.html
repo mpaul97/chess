@@ -2,10 +2,10 @@
   <div class="taken-piece" *ngFor="let pieceInfo of takenPieces">
     <app-piece *ngIf="!pieceInfo.isWhite()" [info]="pieceInfo" [isTaken]="true"></app-piece>
   </div>
-  <p class="score black">+{{ whiteScore }}</p>
+  <p class="score black">+{{ blackScore }}</p>
 </div>
 <div class="taken-container white">
-  <p class="score white">+{{ blackScore }}</p>
+  <p class="score white">+{{ whiteScore }}</p>
   <div class="taken-piece" *ngFor="let pieceInfo of takenPieces">
     <app-piece *ngIf="pieceInfo.isWhite()" [info]="pieceInfo" [isTaken]="true"></app-piece>
   </div>
@@ -35,7 +35,7 @@
     >
       Computer
     </mat-slide-toggle>
-    <div class="notation">
+    <div class="notation" *ngIf="whiteInCheck || blackInCheck || whiteInMate || blackInMate">
       <h3 *ngIf="whiteInCheck" style="color: var(--dark);">+</h3>
       <h3 *ngIf="blackInCheck" style="color: var(--light);">+</h3>
       <h3 *ngIf="whiteInMate" style="color: var(--dark);">*</h3>
