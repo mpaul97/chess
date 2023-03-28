@@ -2,10 +2,10 @@
   <div class="taken-piece" *ngFor="let pieceInfo of takenPieces">
     <app-piece *ngIf="!pieceInfo.isWhite()" [info]="pieceInfo" [isTaken]="true"></app-piece>
   </div>
-  <p class="score black">+{{ blackScore }}</p>
+  <p class="score black">+{{ whiteScore }}</p>
 </div>
 <div class="taken-container white">
-  <p class="score white">+{{ whiteScore }}</p>
+  <p class="score white">+{{ blackScore }}</p>
   <div class="taken-piece" *ngFor="let pieceInfo of takenPieces">
     <app-piece *ngIf="pieceInfo.isWhite()" [info]="pieceInfo" [isTaken]="true"></app-piece>
   </div>
